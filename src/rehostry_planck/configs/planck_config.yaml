@@ -1,0 +1,186 @@
+# Copyright 2026 Christopher Wright
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# OLKB / Drop Planck rev6 -- a 40% ortholinear keyboard on an STM32F303CCT6
+# ("Proton-C"-class), Cortex-M4F / ARMv7E-M, running QMK on ChibiOS.
+# HALucinator config, unicorn backend.
+#
+# STRIPPED IMAGE -- raw .bin, no ELF, no symbols. Nothing is intercepted by
+# name; the device is modelled at the register file (MMIO addresses are
+# architectural) plus three intercepts whose addresses are re-derived by
+# scanning the image (planck_addrs.yaml). See PROVENANCE.md.
+#
+# THE VENDOR FILE IS NOT THIS IMAGE. `planck_rev6_default.bin` has a 16-byte
+# DFU suffix appended (0483:DF11 -- the STM32 system-memory bootloader), so it
+# is not a flash image; tools/extract_firmware.py verifies the suffix's CRC-32,
+# strips it, and cross-checks the resulting 0xF140-byte payload against crt0's
+# own .data copy bounds before writing planck.bin (playbook trap 180).
+#
+# THE CPU MODEL IS NOT SET HERE. On cortex-m the backend reads
+# HAL_CORTEXM_CPU_MODEL from the environment; a `cpu_model:` key below would
+# look like it works and do nothing (playbook trap 120). spawn.py sets
+# UC_CPU_ARM_CORTEX_M4, which this image requires: crt0 writes
+# SCB->CPACR = 0x00F00000 and then executes `vmsr fpscr, r0`.
+#
+# STM32F303CCT6 memory map (RM0316):
+#   flash      0x08000000  256 KB   (payload 0xF140; the rest reads erased)
+#   SRAM       0x20000000   40 KB
+#   CCM SRAM   0x10000000    8 KB
+#   system/OTP 0x1FFFF000            option bytes + the 96-bit unique ID
+#   APB1       0x40000000            TIM2/3/4, RTC, SPI2, I2C1, USB
+#   APB2       0x40010000            SYSCFG, EXTI, TIM1/8/15/16/17, SPI1, USART1
+#   AHB        0x40020000            DMA1, RCC, FLASH, CRC, TSC
+#   GPIO       0x48000000            GPIOA..GPIOF   <- the key matrix
+machine:
+  # unicorn's M-profile decoder; the FPU comes from HAL_CORTEXM_CPU_MODEL.
+  arch: cortex-m3
+  entry_addr: 0x080002BD          # Reset_Handler, Thumb bit already set
+  init_sp: 0x20000400             # the vector table's first word
+  vector_base: 0x08000000
+  interrupt_controller:
+    type: cortex_m
+
+memories:
+  # rwx: nothing in this build programs its own flash, but QMK's wear-levelling
+  # EEPROM emulation lives in the same region and writes must land somewhere
+  # real rather than aborting the run.
+  flash:
+    base_addr: 0x08000000
+    file: planck.bin
+    permissions: rwx
+    size: 0x00040000
+  sram:
+    base_addr: 0x20000000
+    permissions: rw-
+    size: 0x0000A000
+  ccmram:
+    base_addr: 0x10000000
+    permissions: rw-
+    size: 0x00002000
+  halucinator-irq: { base_addr: 0x03ffc000, size: 0x00004000 }
+  halucinator:     { base_addr: 0x04000000, size: 0x00100000 }
+
+peripherals:
+  # Declared as the ranges EITHER SIDE of every modelled page: an overlapping
+  # region leaves the overlap UNMAPPED rather than letting the inner one win
+  # (playbook trap 39). Every region is a 4 kB-aligned multiple of 4 kB
+  # (trap 61).
+  #
+  # NOTE the catch-all class is `SocCatchAll`, NOT `AutoPeripheral`. The core
+  # sets `skip_svc` for any peripheral class literally named `AutoPeripheral`,
+  # and ChibiOS' ARMv7-M port ends every reschedule with `svc 0` (0x080002F2 in
+  # this image), so the stock class anywhere in this file would make the kernel
+  # boot, tick once, and land on the `b .` after that svc for ever -- with no
+  # fault and nothing in the log (playbook traps 11 / 172).
+
+  # ---- APB1 --------------------------------------------------------------
+  # TIM2 is ChibiOS' SYSTEM TICK on this build: the vector table's SysTick slot
+  # is still the weak stub while IRQ 28 has a real handler at 0x0800A5F1
+  # (playbook trap 41). This model owns TIM2's registers and delegates the rest
+  # of the page (TIM3 at +0x400, TIM4 at +0x800) back to the catch-all.
+  tim2:
+    base_addr: 0x40000000
+    emulate: rehostry_planck.peripheral_models.stm32f3_st.Stm32f3SystemTimer
+    permissions: rw-
+    size: 0x00001000
+  apb1_low:
+    base_addr: 0x40001000
+    emulate: rehostry_planck.peripheral_models.soc_catchall.SocCatchAll
+    permissions: rw-
+    size: 0x00004000              # 0x40001000 -> 0x40005000
+  # The 0x40005000 page holds I2C1 (0x40005400, unused on this board) and, at
+  # 0x40005C00, the USB device peripheral's register block.
+  usb_regs:
+    base_addr: 0x40005000
+    emulate: rehostry_planck.peripheral_models.stm32f3_usb.Stm32f3UsbRegs
+    permissions: rw-
+    size: 0x00001000
+  # USB packet memory (PMA), 512 bytes seen as halfwords in 32-bit slots.
+  usb_pma:
+    base_addr: 0x40006000
+    emulate: rehostry_planck.peripheral_models.stm32f3_usb.Stm32f3UsbPma
+    permissions: rw-
+    size: 0x00001000
+  apb1_high:
+    base_addr: 0x40007000
+    emulate: rehostry_planck.peripheral_models.soc_catchall.SocCatchAll
+    permissions: rw-
+    size: 0x00009000              # 0x40007000 -> 0x40010000
+
+  # ---- APB2 --------------------------------------------------------------
+  apb2:
+    base_addr: 0x40010000
+    emulate: rehostry_planck.peripheral_models.soc_catchall.SocCatchAll
+    permissions: rw-
+    size: 0x00010000              # SYSCFG/EXTI/TIMs/SPI1/USART1 -> 0x40020000
+
+  # ---- AHB ---------------------------------------------------------------
+  dma1:
+    base_addr: 0x40020000
+    emulate: rehostry_planck.peripheral_models.soc_catchall.SocCatchAll
+    permissions: rw-
+    size: 0x00001000
+  # RCC and the flash interface are the two pages ChibiOS' clock init writes
+  # and then WAITS TO READ BACK -- exactly what the catch-all's escalating
+  # busy-wait breaker can never satisfy (playbook trap 40).
+  rcc:
+    base_addr: 0x40021000
+    emulate: rehostry_planck.peripheral_models.stm32f3_clock.Stm32f3Rcc
+    permissions: rw-
+    size: 0x00001000
+  flash_if:
+    base_addr: 0x40022000
+    emulate: rehostry_planck.peripheral_models.stm32f3_clock.Stm32f3Flash
+    permissions: rw-
+    size: 0x00001000
+  ahb_high:
+    base_addr: 0x40023000
+    emulate: rehostry_planck.peripheral_models.soc_catchall.SocCatchAll
+    permissions: rw-
+    size: 0x0000D000              # CRC, TSC -> 0x40030000
+
+  # ---- the Cortex-M bit-band alias of the peripheral region ---------------
+  # ARMv7-M aliases the low 1 MB of 0x40000000 into 0x42000000, one 32-bit word
+  # per bit. The unicorn backend implements NO bit-band support (playbook traps
+  # 45 / 58), so this has to be mapped or a single aliased bit-set dies as an
+  # unmapped write at an address that decodes to a register already modelled.
+  bitband:
+    base_addr: 0x42000000
+    emulate: rehostry_planck.peripheral_models.soc_catchall.SocCatchAll
+    permissions: rw-
+    size: 0x02000000
+
+  # ---- the system/OTP page ------------------------------------------------
+  # Option bytes, the 96-bit unique device ID (0x1FFFF7AC) and the FLASH_SIZE
+  # register (0x1FFFF7CC). Nothing maps this by default, so an unmapped read
+  # kills the run (playbook trap 80) -- but mapping it as plain MEMORY is
+  # WORSE: FLASH_SIZE then reads 0, and QMK's wear-levelling backend halts the
+  # kernel with `chSysHalt("No sector in available flash range")` from a code
+  # path that has nothing to do with the register (playbook trap 216). It has
+  # to be modelled. Measured on this device's first boot.
+  sysmem:
+    base_addr: 0x1FFFF000
+    emulate: rehostry_planck.peripheral_models.stm32f3_sysmem.Stm32f3SysMem
+    permissions: rw-
+    size: 0x00001000
+
+  # ---- GPIO (AHB2 on the F3) ---------------------------------------------
+  # THE KEY MATRIX. Left to the catch-all, the busy-wait breaker sees QMK's
+  # scan reading GPIOx_IDR from one PC millions of times, decides it is a
+  # stalled poll, and hands back escalating garbage -- so the firmware "reads"
+  # keys nobody pressed (playbook trap 191). This model is a switch matrix
+  # whose geometry and pin lists are recovered from the image.
+  gpio:
+    base_addr: 0x48000000
+    emulate: rehostry_planck.peripheral_models.gpio_matrix.GpioMatrix
+    permissions: rw-
+    size: 0x00002000              # GPIOA..GPIOF
+
+# NOTE: the ARMv7-M private peripheral bus (0xE0000000, 1 MB) is deliberately
+# NOT declared. The backend auto-maps it and MAINTAINS SCB->ICSR's VECTACTIVE
+# and RETTOBASE itself -- and ChibiOS' ARMv7-M ISR epilogue reads ICSR bit 11
+# (RETTOBASE) and SKIPS THE RESCHEDULE if it is clear (playbook traps 56 /
+# 217). Declaring a model over the PPB would take that over and the kernel
+# would tick for ever without ever switching a thread. The one PPB register
+# this firmware genuinely spins on -- DWT->CYCCNT, inside chSysPolledDelayX --
+# is answered at its own call boundary instead (bp_handlers/polled_delay.py).

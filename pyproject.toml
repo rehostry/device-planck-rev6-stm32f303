@@ -1,0 +1,50 @@
+# Copyright 2026 Christopher Wright
+# SPDX-License-Identifier: AGPL-3.0-or-later
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rehostry-planck-rev6-stm32f303"
+version = "0.1.0"
+description = "OLKB/Drop Planck rev6 (STM32F303, QMK on ChibiOS) as a standalone, pip-installable HALucinator device."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "AGPL-3.0-or-later" }
+authors = [{ name = "Christopher Wright" }]
+classifiers = [
+  "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+]
+keywords = ["halucinator", "rehosting", "firmware", "emulation", "usb", "hid", "qmk"]
+
+# HALucinator itself is a runtime dependency, but it is not on PyPI, so it is
+# NOT listed here -- install the dev core into the same venv
+# (`halucinator[unicorn] @ git+https://github.com/rehostry/halucinator.git@dev`)
+# so `sys.executable` / `HAL_PY` reaches it. No `HALUCINATOR_SRC` injection.
+dependencies = [
+    "pyzmq>=24",
+    "PyYAML>=6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+rehostry-planck = "rehostry_planck.cli:main"
+rehostry-planck-panel = "rehostry_planck.planck_panel:main"
+rehostry-planck-attack = "rehostry_planck.attack:main"
+
+[project.entry-points."halucinator.devices"]
+planck-rev6-stm32f303 = "rehostry_planck:__version__"
+
+[project.urls]
+Homepage = "https://github.com/rehostry/device-planck-rev6-stm32f303"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+# Ship the configs (incl. the generated addr map and facts) and the logging
+# config. Firmware bytes are NOT shipped: QMK is GPLv2, this repo is AGPL, and
+# .gitignore excludes *.bin -- tools/extract_firmware.py regenerates it.
+rehostry_planck = ["configs/*.yaml", "configs/logging.cfg"]

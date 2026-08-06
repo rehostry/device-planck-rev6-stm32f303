@@ -33,6 +33,7 @@ import struct
 import sys
 import zlib
 from pathlib import Path
+from typing import Optional
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_SRC = Path("/Users/user/Development/firmware-incoming/W3a-usb-hid/"
@@ -50,8 +51,13 @@ SRAM_BASE = 0x20000000
 EXPECT_INIT_SP = 0x20000400          # vector[0] -- the MAIN stack top
 EXPECT_RESET = 0x080002BD            # vector[1] (Thumb)
 EXPECT_UNHANDLED = 0x080002BF        # ChibiOS' weak `_unhandled_exception`
-EXPECT_TIM2_IRQ = 28                 # ChibiOS' system tick on this build
 EXPECT_USB_LP_IRQ = 75               # the *remapped* USB low-priority line
+#: The system tick is DERIVED (see find_system_timer) -- these are only the
+#: values this device was built against, asserted so a rebuild that moves the
+#: timer fails here instead of silently injecting into an unrelated vector.
+EXPECT_ST_BASE = 0x40000400          # TIM3, NOT TIM2
+EXPECT_ST_IRQ = 29
+EXPECT_ST_BITS = 16                  # TIM3 is a 16-bit counter on the F3
 EXPECT_PAYLOAD_LEN = 0xF140          # 61760 B, i.e. the file minus the suffix
 
 #: The DFU suffix identifies the bootloader the vendor targets.
@@ -127,7 +133,7 @@ def check_vectors(img: bytes) -> None:
     # A vector-name/stub guard is VACUOUS unless it can also FAIL (playbook
     # traps 118/151/161).  So: the two lines this device injects must NOT be
     # the stub, and a line the board genuinely does not use MUST be.
-    for irq, who in ((EXPECT_TIM2_IRQ, "TIM2 (ChibiOS' system tick)"),
+    for irq, who in ((EXPECT_ST_IRQ, "the RTOS system tick (DERIVED)"),
                      (EXPECT_USB_LP_IRQ, "USB low-priority (remapped)")):
         v = u32(img, (16 + irq) * 4)
         if v == stub:
@@ -245,6 +251,122 @@ def find_seams(img: bytes) -> dict:
     print("chSysPolledDelayX      : 0x%08X" % polled[0])
 
     return {"idle": idle[0], "halts": halts, "polled_delay": polled[0]}
+
+
+def _bl_target(img: bytes, off: int) -> Optional[int]:
+    """Decode a Thumb-2 ``bl`` at ``off``; None if there is not one there."""
+    if off + 4 > len(img):
+        return None
+    h1, h2 = u16(img, off), u16(img, off + 2)
+    if (h1 & 0xF800) != 0xF000 or (h2 & 0xD000) != 0xD000:
+        return None
+    s = (h1 >> 10) & 1
+    imm10, imm11 = h1 & 0x3FF, h2 & 0x7FF
+    j1, j2 = (h2 >> 13) & 1, (h2 >> 11) & 1
+    i1, i2 = 1 - (j1 ^ s), 1 - (j2 ^ s)
+    delta = (s << 24) | (i1 << 23) | (i2 << 22) | (imm10 << 12) | (imm11 << 1)
+    if s:
+        delta -= 1 << 25
+    return FLASH_BASE + off + 4 + delta
+
+
+def find_system_timer(img: bytes) -> dict:
+    """Derive which timer ChibiOS ticks on, its width, and its interrupt line.
+
+    **Never copy this from a sibling device** (playbook trap 141). The sibling
+    STM32F303/ChibiOS rehost in this fleet (device-nanovna-h4) ticks on
+    **TIM2 / IRQ 28**; this image ticks on **TIM3 / IRQ 29**, and IRQ 28 is
+    *also live* here (QMK drives TIM2 as a PWM/GPT), so "is the vector the weak
+    stub?" answers YES for the wrong timer and a copied number injects into a
+    real, unrelated handler. That mistake was made on this device's first boot
+    and cost a run.
+
+    Everything below is decoded instead:
+
+    * ``st_lld_get_counter()`` is four instructions and gives the base *and*
+      the counter width -- a ``uxth`` after the load means a 16-bit timer::
+
+          08008724:  ldr  r3, =0x40000400
+                     ldr  r0, [r3, #0x24]     ; TIMx->CNT
+                     uxth r0, r0              ; <- 16-bit
+                     bx   lr
+
+    * ``st_lld_start_alarm()`` must write ``CCR1`` (+0x34), clear ``SR``
+      (+0x10) and set ``DIER`` (+0x0C) at that same base.
+    * the interrupt line is the **unique** live vector whose handler reaches a
+      function that carries that base in its literal pool (playbook trap 197 --
+      derive the line from what the handler CALLS, not from a datasheet).
+    """
+    cands = []
+    for shape, bits in ((bytes.fromhex("014b" "586a" "80b2" "7047"), 16),
+                        (bytes.fromhex("014b" "586a" "7047"), 32)):
+        start = 0
+        while True:
+            o = img.find(shape, start)
+            if o < 0:
+                break
+            start = o + 2
+            lit = ((o + 4) & ~3) + 4            # `ldr r3,[pc,#4]`
+            cands.append((FLASH_BASE + o, u32(img, lit), bits))
+    if len(cands) != 1:
+        raise Fail("expected exactly one st_lld_get_counter shape; found %s"
+                   % [(hex(a), hex(b), w) for a, b, w in cands])
+    getter, base, bits = cands[0]
+    print("st_lld_get_counter    : 0x%08X -> timer at 0x%08X, %d-bit counter"
+          % (getter, base, bits))
+
+    # st_lld_start_alarm: CCR1 <- t ; SR <- 0 ; DIER <- CC1IE, at the same base.
+    alarm = bytes.fromhex("034b" "0022" "5863" "1a61" "0222" "da60" "7047")
+    o = img.find(alarm)
+    if o < 0:
+        raise Fail("st_lld_start_alarm's CCR1/SR/DIER sequence not found")
+    lit = ((o + 4) & ~3) + 4 * 3
+    if u32(img, lit) != base:
+        raise Fail("st_lld_start_alarm programs 0x%08X but st_lld_get_counter "
+                   "reads 0x%08X" % (u32(img, lit), base))
+    print("st_lld_start_alarm    : 0x%08X (CCR1/SR/DIER at the same base)"
+          % (FLASH_BASE + o))
+
+    stub = u32(img, 2 * 4)
+    hits = []
+    for irq in range(84):
+        v = u32(img, (16 + irq) * 4)
+        if v == stub:
+            continue
+        entry = (v & ~1) - FLASH_BASE
+        for probe in (entry, entry + 2, entry + 4, entry + 6):
+            target = _bl_target(img, probe)
+            if target is None:
+                continue
+            f = (target & ~1) - FLASH_BASE
+            if any(u32(img, f + i) == base
+                   for i in range(0, 0x60, 4) if f + i + 4 <= len(img)):
+                hits.append((irq, v, target))
+                break
+    if len(hits) != 1:
+        raise Fail("expected exactly one live vector whose handler reaches the "
+                   "system timer; found %s" % [(i, hex(v)) for i, v, _ in hits])
+    irq, vec, serve = hits[0]
+    print("system tick           : IRQ %d, vector 0x%08X -> serve 0x%08X"
+          % (irq, vec, serve))
+    if (base, irq, bits) != (EXPECT_ST_BASE, EXPECT_ST_IRQ, EXPECT_ST_BITS):
+        raise Fail("system tick moved: derived (0x%08X, IRQ %d, %d-bit), the "
+                   "config was built against (0x%08X, IRQ %d, %d-bit)"
+                   % (base, irq, bits, EXPECT_ST_BASE, EXPECT_ST_IRQ,
+                      EXPECT_ST_BITS))
+    # Pointed control: the sibling F303/ChibiOS device in this fleet ticks on
+    # TIM2/IRQ 28, and IRQ 28 is LIVE here too -- so a "is it the stub?" check
+    # on the copied number passes. Assert the derivation actually rejects it.
+    if irq == 28 or base == 0x40000000:
+        raise Fail("the derivation returned the sibling device's TIM2/IRQ 28, "
+                   "which means it is not discriminating")
+    if u32(img, (16 + 28) * 4) == stub:
+        raise Fail("IRQ 28 is the stub on this image, so 'the derivation "
+                   "rejected a LIVE wrong candidate' is not demonstrated")
+    print("control: IRQ 28 (TIM2) is LIVE here and was still rejected, so the "
+          "derivation discriminates rather than just avoiding the stub")
+    return {"base": base, "irq": irq, "bits": bits, "vector": vec,
+            "serve": serve, "getter": getter}
 
 
 # ---------------------------------------------------------------------------
@@ -446,7 +568,7 @@ def find_host_state(img: bytes, lit: dict) -> dict:
 
 # ---------------------------------------------------------------------------
 def emit_yaml(out_dir: Path, seams: dict, matrix: dict, host: dict,
-              descs: dict) -> None:
+              descs: dict, timer: dict) -> None:
     lines = [
         "# GENERATED by tools/extract_firmware.py -- do not hand-edit.",
         "#",
@@ -487,10 +609,22 @@ def emit_yaml(out_dir: Path, seams: dict, matrix: dict, host: dict,
     facts = [
         "# GENERATED by tools/extract_firmware.py -- do not hand-edit.",
         "#",
+        "# The system tick is DERIVED, never copied from a sibling device",
+        "# (playbook trap 141): this image ticks on TIM3/IRQ 29, while the",
+        "# fleet's other STM32F303/ChibiOS rehost ticks on TIM2/IRQ 28 -- and",
+        "# IRQ 28 is live here too, so a copied number injects into a real,",
+        "# unrelated handler with nothing looking wrong.",
+        "#",
         "# Facts recovered from the firmware image, consumed by the device's",
         "# models, its attack and its tests.  Keeping them here (rather than as",
         "# literals in Python) means a rebuild that moves anything fails at",
         "# EXTRACTION rather than as a confusing runtime symptom.",
+        "system_timer:",
+        "  base: 0x%08X" % timer["base"],
+        "  irq: %d" % timer["irq"],
+        "  bits: %d" % timer["bits"],
+        "  vector: 0x%08X" % timer["vector"],
+        "  serve: 0x%08X" % timer["serve"],
         "matrix:",
         "  rows: %d" % matrix["rows"],
         "  cols: %d" % matrix["cols"],
@@ -554,6 +688,7 @@ def main(argv=None) -> int:
     check_vectors(img)
     lit = check_load_base(img)
     seams = find_seams(img)
+    timer = find_system_timer(img)
     descs = find_descriptors(img)
     matrix = find_matrix(img)
     host = find_host_state(img, lit)
@@ -561,7 +696,7 @@ def main(argv=None) -> int:
     args.out.mkdir(parents=True, exist_ok=True)
     (args.out / "planck.bin").write_bytes(img)
     print("wrote %s" % (args.out / "planck.bin"))
-    emit_yaml(args.out, seams, matrix, host, descs)
+    emit_yaml(args.out, seams, matrix, host, descs, timer)
     print("OK")
     return 0
 

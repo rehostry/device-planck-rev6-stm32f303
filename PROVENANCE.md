@@ -76,6 +76,11 @@ base and the suffix strip are arithmetically forced, not guessed.
 * `SysTick` (vector 15) **is the stub** ⇒ the RTOS tick is a hardware timer,
   not SysTick (playbook trap 41).
 * **IRQ 28 → `0x0800A5F1`** — TIM2, ChibiOS' system tick on this build.
+  *[appended after the first boot: **this line is WRONG**. IRQ 28 is live, but
+  it is QMK's PWM, not the tick. The tick is TIM3 / IRQ 29 / 16-bit. The
+  original text is left exactly as it was committed, because that is the whole
+  point of a pre-boot prediction; the correction and how the timer is now
+  derived from the image are in §6.3.]*
 * **IRQ 75 → `0x0800A671`** — the **remapped** USB low-priority line.
 * Control: **IRQ 19 and IRQ 20** — the *non*-remapped `USB_HP_CAN_TX` /
   `USB_LP_CAN_RX0` lines a datasheet would send you to — are the weak stub, and
@@ -374,3 +379,124 @@ Stated in advance so that a wall is a prediction rather than an excuse.
   with no emulator running.
 * The `.data` arithmetic in §1.1 closes exactly, or extraction fails.
 * The vector-table guard in §1.2 is required to *fail* on IRQ 19/20/33.
+
+---
+
+## 6. AFTER THE FIRST BOOT — what matched, and what the prediction got wrong
+
+Everything above this section was committed **before** the firmware had ever
+been booted (`git log` shows that commit alone; §0 tells you how to check).
+This section was appended afterwards and says plainly what the running firmware
+did, including where the prediction was wrong.
+
+### 6.1 Matched byte-for-byte
+
+Driven by the modelled host, the firmware transmitted, on endpoint 0:
+
+| descriptor | predicted in | result |
+|---|---|---|
+| device, 18 B `12 01 00 02 00 00 00 40 A8 03 F9 A4 06 00 01 02 03 01` | §2.1 | **exact** |
+| configuration, 84 B | §2.2 | **exact** |
+| string 0 / 1 (`OLKB`) / 2 (`Planck`) | §2.3 | **exact** |
+| HID report, interface 0, 68 B | §2.4 | **exact** |
+| HID report, interface 1, 182 B | §2.4 | **exact** |
+| HID report, interface 2, 21 B | §2.4 | **exact** |
+
+and, once configured, on **interface 2's** interrupt IN endpoint (0x83):
+
+```
+55 53 42 20 63 6f 6e 66 69 67 75 72 65 64 2e 0a   "USB configured.\n"
+```
+
+padded to the 32-byte report — §2.5(a), matched. That one is worth more than the
+descriptors: it is emitted by the firmware's own main thread *after* enumeration
+completes, over a different interface, so it is not a flash read.
+
+The HID host state (§2.5(b)) also matched: `GET_PROTOCOL` answered **0x01** and
+`GET_IDLE` answered **0x00** on a freshly booted device, exactly the values read
+out of the `.data` initialiser image at `0x0800ECCD` before the first boot.
+
+The serial-number string descriptor came back as
+`5245484F535452592D504C4100000000` — the firmware's own hex formatter run over
+the synthetic unique ID this rehost serves (`REHOSTRY-PLA`, §5.1). It proves the
+formatter ran; it identifies no real die, and nothing here depends on it.
+
+### 6.2 The attack, as run
+
+```
+[baseline ] the firmware reports protocol 0x01
+[attack   ] SET_PROTOCOL(0) -> interface 0            result=ok
+[verify   ] the firmware now reports protocol 0x00
+[verdict  ] landed=True
+RESULT: {"booted": true, "landed": true}
+```
+
+### 6.3 WHERE THE PREDICTION WAS WRONG
+
+**§3.3, negative control 1.** The prediction said `SET_PROTOCOL` addressed to
+interface 1 "must be rejected", reading `0x08007176`'s `bne` as a branch to the
+*not-handled* path. It is not. The branch target is `0x0800718C`, which sets a
+zero-length reply and returns **TRUE** — so the firmware **accepts the request
+at the protocol level and silently ignores it**; it does not STALL:
+
+```
+8007176:  ldrb  r3,[r4,#120] ; ldrb r2,[r4,#121] ; orrs r3,r3,r2 lsl 8
+8007182:  bne   0x800718c            ; wIndex != 0 -> skip the store...
+8007184:  ldrb  r0,[r4,#118]         ; ...but still reply
+8007188:  bl    set_keyboard_protocol
+800718c:  movs  r2,#0 ; str r2,[r4,#104] ; movs r5,#0 ; b 0x8007140  -> return TRUE
+```
+
+The *load-bearing* half of the prediction — that `keyboard_protocol` is
+**unchanged** — holds exactly, and that is what the attack now asserts. The
+mechanism claim was wrong and is corrected here rather than quietly re-worded
+above. Negative control 2 (`GET_DESCRIPTOR(REPORT, index 3)`) did produce a real
+**STALL**, as predicted.
+
+**§4, predicted wall 3 — the timer was the wrong one, and the prediction did not
+say which.** §4.3 said "TIM2 must have a capture/compare interrupt". It is not
+TIM2. This image ticks on **TIM3 / IRQ 29 / a 16-bit counter**, while the
+fleet's other STM32F303 + ChibiOS rehost (`device-nanovna-h4`) ticks on
+**TIM2 / IRQ 28** — and IRQ 28 is *live here too* (QMK drives TIM2 as a PWM), so
+the obvious guard "is IRQ 28's vector the weak stub?" answers NO for the wrong
+timer. Copying the sibling's number was the first boot's actual failure. The
+timer, its width and its interrupt line are now **derived from the image** by
+`tools/extract_firmware.py` (`st_lld_get_counter`'s literal and the `uxth` that
+makes it 16-bit; `st_lld_start_alarm`'s CCR1/SR/DIER writes at the same base;
+and the unique live vector whose handler reaches that base), and the extractor
+hard-fails if the derivation ever returns TIM2/IRQ 28.
+
+### 6.4 One wall that was not predicted at all
+
+Mapping the system/OTP page at `0x1FFFF000` as plain read-only **memory** made
+the **flash-size register** at `0x1FFFF7CC` read 0, and QMK's wear-levelling
+EEPROM backend concluded the part has no flash and halted the kernel:
+
+```
+8004a20:  ldr   r3,=0x1FFFF000 ; ldr.w r3,[r3,#0x7CC] ; and.w r5,r5,r3 lsl #10
+8004a66:  ldr   r0,="No sector in available flash range" ; bl chSysHalt
+```
+
+That is playbook trap 216 (a mapped-but-empty region is worse than an unmapped
+one) and it is now modelled — 256 kB, the STM32F303**CC**'s real capacity. §4
+should have listed it; it did not.
+
+### 6.5 Controls run against the finished device
+
+| control | what it changes | result |
+|---|---|---|
+| `--control withhold` | everything identical, `SET_PROTOCOL` never sent | protocol stays **0x01**, `landed: false` |
+| `--control wrong-interface` | `SET_PROTOCOL` sent only to interface **1** | protocol stays **0x01**, `landed: false` |
+| `--control no-usb-irq` | the guest's USB line is withheld; the host stack, the bridge and the client all stay alive | 163,737 host beats, **zero** descriptors, `landed: false` |
+| decoy on `127.0.0.1`, no emulator | replays a recorded transcript | refused at pre-flight |
+| decoy on `0.0.0.0`, no emulator | replays a recorded transcript | refused at pre-flight |
+| decoy + `HAL_PLANCK_AUDIT_SKIP=preflight,bindmarker` | port guards deliberately disabled | refused at the **identity challenge** |
+| `--control nopayload` (a typo) | — | `exit 2`, the real attack is **not** run |
+
+The `no-usb-irq` row is the guest-derivation control. `SIGSTOP` on the emulator
+would freeze the peripheral models and the bridge too, because they are threads
+in the same process, so it proves only "replies exist while that process runs"
+(playbook traps 183 / 187). Withholding one *guest* interrupt line leaves the
+entire host side running — the bridge binds, the client connects, the identity
+passes, the host state machine beats 163,737 times — and the device produces
+nothing. The bytes are the guest's.
