@@ -19,7 +19,7 @@ keywords = ["halucinator", "rehosting", "firmware", "emulation", "usb", "hid", "
 
 # HALucinator itself is a runtime dependency, but it is not on PyPI, so it is
 # NOT listed here -- install the dev core into the same venv
-# (`halucinator[unicorn] @ git+https://github.com/rehostry/halucinator.git@dev`)
+# (`halucinator[unicorn] @ git+https://github.com/rehostry/halucinator.git@fleet-census-2026-08-19`)
 # so `sys.executable` / `HAL_PY` reaches it. No `HALUCINATOR_SRC` injection.
 dependencies = [
     "pyzmq>=24",
