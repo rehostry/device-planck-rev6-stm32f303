@@ -230,6 +230,7 @@ def run_attack(on_stage: Optional[Callable] = None,
             on_stage(name, **data)
 
     res: Dict = {"booted": False, "landed": False, "control": control,
+                 "usb_hid_control_round_trip": False, "milestone": "M0",
                  "control_description": CONTROLS[control], "stages": []}
     stage("mode", control=control, description=CONTROLS[control])
 
@@ -435,7 +436,16 @@ def run_attack(on_stage: Optional[Callable] = None,
             and res["reject_bad_report_index"]
             and control == "none"
             and after == 0x00)
-        res["landed"] = landed
+        # THE SEAM: USB control transfers. SET_IDLE with a byte chosen at run
+        # time came back out of GET_IDLE through the firmware's own handler,
+        # GET_PROTOCOL answered, and the report descriptors were transmitted by
+        # the firmware. No recorded transcript can satisfy the live challenge.
+        res["usb_hid_control_round_trip"] = bool(
+            res["live_challenge"] and res["descriptor_match"]
+            and before in (0x00, 0x01))
+        res["landed"] = landed and res["usb_hid_control_round_trip"]
+        res["milestone"] = ("M4" if res["usb_hid_control_round_trip"]
+                            else "M3" if res.get("booted") else "M0")
         res["protocol_downgraded"] = (before == 0x01 and after == 0x00)
         stage("verdict", landed=landed, before=before, after=after,
               as_expected=changed)
@@ -564,7 +574,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     res = run_attack(on_stage=show, log_dir=args.log_dir,
                      control=args.control)
     print("RESULT:", json.dumps({k: v for k, v in res.items()
-                                 if k in ("booted", "landed")}))
+                                 if k in ("booted", "landed",
+                                          "usb_hid_control_round_trip", "milestone")}))
     return 0 if res.get("landed") else 1
 
 
