@@ -38,8 +38,26 @@ def _kill_tree(proc: subprocess.Popen) -> None:
     # and the victim sees rc=-15 with no fault in its log -- indistinguishable
     # from a clean timeout, so it gets misread as a firmware result (playbook
     # trap 10).
-    pids = _descendants(proc.pid) + [proc.pid]
     for sig in (signal.SIGTERM, signal.SIGKILL):
+        # Signal the whole SESSION we created (the spawn passes setsid /
+        # start_new_session, so the child IS the group leader and the group id
+        # is proc.pid). The halucinator emulator is a GRANDCHILD: killing only
+        # the direct child leaves it alive, reparented to init, still holding
+        # the guest's port and burning a core.
+        #
+        # proc.pid is used directly rather than os.getpgid(proc.pid): getpgid
+        # raises ProcessLookupError as soon as the direct child is reaped, and
+        # that is exactly the case where the grandchild is still running and
+        # most needs the signal. The descendant walk below races the same
+        # reparenting -- once the grandchild's parent is gone, `pgrep -P` no
+        # longer lists it under our pid -- so it is kept only as a fallback for
+        # a child that never got its own session.
+        # Still only PIDs WE started. NEVER a pattern kill.
+        try:
+            os.killpg(proc.pid, sig)
+        except (ProcessLookupError, PermissionError, OSError):
+            pass
+        pids = _descendants(proc.pid) + [proc.pid]
         for p in pids:
             try:
                 os.kill(p, sig)
