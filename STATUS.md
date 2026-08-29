@@ -1,3 +1,4 @@
+<!-- rehostry-census: milestone=M4 landed=true verdict=M4-OK verified=2026-08-28 method=live-run -->
 # STATUS — device-planck-rev6-stm32f303
 
 **Milestone reached: M4** — a real protocol round-trip over the firmware's own
