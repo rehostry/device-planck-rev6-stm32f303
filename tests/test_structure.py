@@ -302,7 +302,7 @@ def test_live_challenge_refuses_a_replayed_transcript():
 
     calls = []
     assert attack_mod._live_challenge(
-        Replay(), 1e18, lambda *a, **k: calls.append(a)) is False
+        Replay(), 1e18, lambda *a, **k: calls.append(a))["ok"] is False
     # ...and it must PASS against a peer that really stores what it is told,
     # or the test above would pass for a broken challenge.
 
@@ -317,8 +317,154 @@ def test_live_challenge_refuses_a_replayed_transcript():
                 return "CTRL-OK %02x" % Honest.value
             return "CTRL-OK "
 
-    assert attack_mod._live_challenge(
-        Honest(), 1e18, lambda *a, **k: None) is True
+    ok = attack_mod._live_challenge(Honest(), 1e18, lambda *a, **k: None)
+    assert ok["ok"] is True
+    # ...and the M6 term specifically: N of N with a floor, and N DIFFERENT
+    # states producing N DIFFERENT correct replies.
+    assert ok["rounds"] >= attack_mod.MIN_LADDER_ROUNDS
+    assert ok["passed"] == ok["rounds"]
+    assert ok["distinct_states"] >= 2
+    assert ok["distinct_replies"] == ok["distinct_states"]
+    assert ok["stateful"] is True
+
+
+def test_m6_term_is_falsified_by_the_constant_knob():
+    """`--control idle-constant` must kill the M6 term and ONLY the M6 term.
+
+    Same honest peer, same code path, same round count: only the *input* stops
+    varying. The round trip must still pass and the differential must not --
+    a knob that also breaks the round trip would prove nothing about M6.
+    """
+    class Honest:
+        value = 0
+
+        def cmd(self, text, deadline):
+            if text.startswith("CTRL 0x21 0x0A"):
+                Honest.value = (int(text.split()[3], 0) >> 8) & 0xFF
+                return "CTRL-OK "
+            if text.startswith("CTRL 0xA1 0x02"):
+                return "CTRL-OK %02x" % Honest.value
+            return "CTRL-OK "
+
+    out = attack_mod._live_challenge(Honest(), 1e18, lambda *a, **k: None,
+                                     constant=True)
+    assert out["ok"] is True                 # the round trip survives
+    assert out["distinct_states"] == 1
+    assert out["stateful"] is False          # ...and only M6 falls
+
+
+def test_zero_rounds_does_not_score_vacuously():
+    """`all([])` is True. Nothing here may inherit that.
+
+    Every counted verdict in this module asserts `passed == rounds` AND a
+    floor. With zero rounds the first half is satisfied by `0 == 0`, so the
+    floor is the whole guard -- and it is exercised here rather than assumed.
+    """
+    class Honest:
+        value = 0
+
+        def cmd(self, text, deadline):
+            if text.startswith("CTRL 0x21 0x0A"):
+                Honest.value = (int(text.split()[3], 0) >> 8) & 0xFF
+                return "CTRL-OK "
+            if text.startswith("CTRL 0xA1 0x02"):
+                return "CTRL-OK %02x" % Honest.value
+            return "CTRL-OK "
+
+    out = attack_mod._live_challenge(Honest(), 1e18, lambda *a, **k: None,
+                                     rounds=0)
+    assert out["rounds"] == 0 and out["passed"] == 0
+    assert out["ok"] is False and out["stateful"] is False
+
+
+def test_milestone_is_derived_and_never_a_literal():
+    """The rung must come off the LADDER, and a term going false must drop it.
+
+    The defect this device carried was `res["milestone"] = "M4"` -- a literal
+    that no amount of evidence could raise, three lines below four computed
+    M6/M7-shaped keys that reached no RESULT key at all.
+    """
+    full = {"booted": True, "descriptor_match": True,
+            "usb_hid_control_round_trip": True, "stateful_readback": True,
+            "adversarial_tolerated": True}
+    assert attack_mod.grade(full)[0] == "M7"
+    assert attack_mod.grade({**full, "adversarial_tolerated": False})[0] == "M6"
+    assert attack_mod.grade({**full, "stateful_readback": False})[0] == "M4"
+    assert attack_mod.grade({**full, "descriptor_match": False})[0] == "M1"
+    assert attack_mod.grade({})[0] == "M0"
+    import inspect
+    # ------------------------------------------------------------------
+    # W1 (2026-09-02): THIS USED TO BE A SUBSTRING SCAN AND IT CONSTRAINED
+    # NOTHING. It searched `inspect.getsource()` for two literal spellings; an
+    # audit enumerated EIGHT working equivalents that assign a milestone
+    # literal anyway -- no spaces, mixed quote styles, `.update()`, assignment
+    # via a module constant, a different variable name, a computed key,
+    # `setattr`, `|=` -- and the scan caught **0 of 8**. The property was true
+    # of this file but was in no way guaranteed.
+    #
+    # It is now an AST walk (`tests/_milestone_ast.py`): every write of a
+    # `milestone` key or attribute must be one of exactly two shapes -- the M0
+    # initialiser, or the `x["milestone"], x["rungs_met"] = grade(...)` tuple
+    # unpack. Spelling is irrelevant to it. The evasion suite that proves it
+    # is not decoration is the test immediately below.
+    from _milestone_ast import milestone_writes, unexpected_milestone_writes
+    src = inspect.getsource(attack_mod)
+    writes = milestone_writes(src)
+    assert unexpected_milestone_writes(src) == [], writes
+    # ...and both allowed shapes are actually PRESENT. Without this an empty
+    # result -- the classic vacuous pass -- would satisfy the assert above.
+    kinds = {k for _, k, _ in writes}
+    assert "ALLOWED:initialiser" in kinds and "ALLOWED:grade" in kinds, writes
+
+
+def test_the_milestone_guard_catches_what_the_old_substring_scan_missed():
+    """The guard must FAIL on evasions -- RULES 2.1: if you cannot make your
+    own test fail, it is not a test.
+
+    These are the auditor's own eight equivalents. The substring scan this
+    replaced passed all eight; the AST check must reject all eight, or it is
+    the same decoration in a new shape.
+    """
+    from _milestone_ast import unexpected_milestone_writes
+    evasions = [
+        'res["milestone"]="M7"',                    # no spaces
+        "res['milestone'] = \"M7\"",                # mixed quote styles
+        'res.update({"milestone": "M7"})',          # dict update
+        'res["milestone"] = _RUNG',                 # via a module constant
+        'out["milestone"] = "M7"',                  # a different variable name
+        'res[KEY_MS] = "M7"',                       # computed key
+        'setattr(ns, "milestone", "M7")',           # attribute form
+        'res |= {"milestone": "M7"}',               # 3.9+ merge operator
+    ]
+    for bad in evasions:
+        assert unexpected_milestone_writes(bad), "evasion NOT caught: " + bad
+    # ...and the two legitimate shapes are not rejected.
+    for good in ('result = {"booted": False, "milestone": "M0"}',
+                 'res["milestone"], res["rungs_met"] = grade(res)'):
+        assert unexpected_milestone_writes(good) == [], good
+
+
+def test_result_line_is_a_deny_list_not_a_fixed_tuple():
+    """A fixed key tuple is how this device's M6/M7 evidence went unread."""
+    for key in ("protocol_downgraded", "reject_wrong_interface",
+                "reject_bad_report_index", "adversarial_tolerated",
+                "stateful_readback", "milestone", "rungs_met"):
+        assert key not in attack_mod.RESULT_BULK
+
+    # ------------------------------------------------------------------
+    # W2 (2026-09-02): THE INVARIANT IS NOW DERIVED, NOT HAND-WRITTEN.
+    # This test used to assert a hand-maintained key list was absent from
+    # RESULT_BULK. That checks today's rungs and nothing else: add a rung to
+    # LADDER tomorrow and its key could be dropped into RESULT_BULK and vanish
+    # from the RESULT: line with every test still green -- which is exactly the
+    # failure ("a fixed key tuple") these tests exist to prevent, one level up.
+    # Deriving it from LADDER makes a new rung self-protecting.
+    for _rung, _key in attack_mod.LADDER:
+        assert _key not in attack_mod.RESULT_BULK, (
+            "rung %s grades on %r, which RESULT_BULK would hide" % (_rung, _key))
+    # the grade() output itself must reach the line too
+    for _key in ("milestone", "rungs_met"):
+        assert _key not in attack_mod.RESULT_BULK
 
 
 def test_preflight_refuses_a_held_port():

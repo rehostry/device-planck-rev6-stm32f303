@@ -118,6 +118,20 @@ def cmd_attack(args: argparse.Namespace) -> int:
                        (["--log-dir", args.log_dir] if args.log_dir else []))
 
 
+def cmd_ladder(args: argparse.Namespace) -> int:
+    """Run the graded ladder and print the rung it derives.
+
+    Same run as ``attack``; the difference is that the rung table is printed
+    as well. The rung itself is on the ``RESULT:`` line in both cases -- the
+    ladder is not an opt-in mode, because a device whose default RESULT says
+    ``M4`` while an opt-in flag says ``M7`` is exactly the ceiling this was
+    added to remove.
+    """
+    from . import attack
+    return attack.main(["--control", args.control, "--ladder"] +
+                       (["--log-dir", args.log_dir] if args.log_dir else []))
+
+
 def cmd_panel(args: argparse.Namespace) -> int:
     from . import planck_panel
     return planck_panel.main(["--http-port", str(args.http_port)])
@@ -141,6 +155,17 @@ def main(argv=None) -> int:
     a.add_argument("--control", default="none")
     a.add_argument("--log-dir", default=None)
     a.set_defaults(func=cmd_attack)
+
+    from . import attack as _attack
+    lad = sub.add_parser(
+        "ladder",
+        help="run the graded ladder and print the rung it derives",
+        description="Derives the milestone from the evidence. Controls: " +
+                    "; ".join("%s = %s" % kv
+                              for kv in sorted(_attack.CONTROLS.items())))
+    lad.add_argument("--control", default="none")
+    lad.add_argument("--log-dir", default=None)
+    lad.set_defaults(func=cmd_ladder)
 
     w = sub.add_parser("panel", help="serve the web panel")
     w.add_argument("--http-port", type=int, default=8892)

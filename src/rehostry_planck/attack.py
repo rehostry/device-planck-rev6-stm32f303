@@ -76,7 +76,29 @@ CONTROLS = {
                        "firmware must refuse",
     "no-usb-irq": "spawn with the guest's USB interrupt WITHHELD: the host "
                   "stack stays fully alive while the guest's USB path is dead",
+    # -- LADDER KNOBS. Each one falsifies exactly ONE deciding term. A knob
+    # that drives some other term while leaving the verdict true is not a
+    # control (this fleet found that exact defect on a sibling device today).
+    "idle-constant": "drive SET_IDLE with the SAME byte in every round: the "
+                     "round trip still passes, but the firmware is never put "
+                     "into two different states, so the M6 term -- and ONLY "
+                     "the M6 term -- must go false",
+    "fuzz-benign": "replace every malformed request in the adversarial stage "
+                   "with its WELL-FORMED twin (report index 0, string index "
+                   "1, an implemented bRequest). The firmware answers them, "
+                   "so the 'no descriptor was produced' oracle must go false "
+                   "-- proving that oracle discriminates rather than being "
+                   "satisfied by anything. M4 and M6 must survive.",
 }
+
+#: Rule 2 -- no one-shot oracles. Every differential and every refusal below is
+#: repeated this many times with a **fresh, run-time-chosen** input, and the
+#: verdicts below assert ``passed == rounds`` with ``rounds >= MIN``, never
+#: ``>= 1`` and never a bare ``all(...)``: ``all([])`` is vacuously True and has
+#: already scored a dead arm as perfect on this fleet. Set to 0 to demonstrate
+#: the empty-list guard -- it must produce M4, not M7.
+LADDER_ROUNDS = int(os.environ.get("HAL_PLANCK_LADDER_ROUNDS", "3"))
+MIN_LADDER_ROUNDS = 3
 
 #: AUDIT-ONLY lever, and it only ever WEAKENS the guards. An auditor testing
 #: "is layer 2 load-bearing, or is the run only saved by the port checks?" needs
@@ -214,6 +236,88 @@ GET_PROTOCOL = (0xA1, 0x03)
 SET_PROTOCOL = (0x21, 0x0B)
 GET_IDLE = (0xA1, 0x02)
 SET_IDLE = (0x21, 0x0A)
+GET_DESCRIPTOR = (0x81, 0x06)
+DESC_REPORT, DESC_STRING = 0x22, 0x03
+
+
+# ---------------------------------------------------------------------------
+# the ladder
+# ---------------------------------------------------------------------------
+#: The rung is DERIVED, never written down. Each entry is (rung, evidence key);
+#: the milestone is the last rung whose key is true with every earlier key true,
+#: so a term that goes false drops the rung and is visible in ``rungs_met``.
+#:
+#: **M5 and M8 are deliberately absent and that is a claim, not an omission.**
+#: This device has exactly ONE link to exactly one peer: the USB wire, to the
+#: host. Its three HID *interfaces* (boot keyboard / NKRO / QMK console) are
+#: three descriptor sets multiplexed over that one bus, addressed by wIndex on
+#: the same EP0 dispatcher and served by the same ChibiOS USB driver -- "two
+#: commands over one seam are one interface". So `usb_hid_control_round_trip`,
+#: `descriptor_match`, `live_challenge` and the console read-back all collapse
+#: into ONE interface, and M5/M8 are undefined here rather than unmet.
+LADDER: Tuple[Tuple[str, str], ...] = (
+    ("M1", "booted"),
+    ("M3", "descriptor_match"),
+    ("M4", "usb_hid_control_round_trip"),
+    ("M6", "stateful_readback"),
+    ("M7", "adversarial_tolerated"),
+)
+
+#: One link, one peer -- see the LADDER note. Written down so a census can read
+#: it rather than infer it from the number of `*_round_trip` keys, which has
+#: over-counted on four devices in this fleet.
+INTERFACE_INVENTORY = {
+    # Source: the FIRMWARE'S OWN configuration descriptor, read off the wire
+    # during enumeration -- bNumInterfaces and the three HID report
+    # descriptors it hands out. Not "what we implemented": if we implemented
+    # less the descriptor would still say the same thing.
+    "links": ["USB full-speed device (EP0 control + IN 0x81/0x82/0x83)"],
+    "count": 1,
+    "m5_defined": False,
+    "why": "one bus, one peer; interfaces 0/1/2 are wIndex values on the same "
+           "EP0 dispatcher, not separate links",
+}
+
+
+def grade(res: Dict) -> Tuple[str, Dict[str, bool]]:
+    """Walk the ladder and return (milestone, per-rung truth)."""
+    met = {rung: bool(res.get(key)) for rung, key in LADDER}
+    milestone = "M0"
+    for rung, key in LADDER:
+        if not res.get(key):
+            break
+        milestone = rung
+    return milestone, met
+
+
+#: Keys too bulky (or too noisy) for a one-line RESULT:. Everything else is
+#: emitted -- see the note in ``main``.
+RESULT_BULK = {"descriptors", "stages", "console", "log",
+               "adversarial_detail", "control_description"}
+
+
+def ladder_report(res: Dict) -> str:
+    """A human-readable rung table for the ``ladder`` subcommand."""
+    lines = ["", "LADDER (rung derived from evidence, never written down)"]
+    met = res.get("rungs_met") or {}
+    for rung, key in LADDER:
+        lines.append("  %-3s %-30s %s" % (rung, key,
+                                          "PASS" if met.get(rung) else "--"))
+    inv = res.get("interfaces") or INTERFACE_INVENTORY
+    lines.append("  M5/M8 undefined: %d interface -- %s"
+                 % (inv["count"], inv["why"]))
+    lines.append("  evidence: idle %s/%s rounds, %s distinct states -> %s "
+                 "distinct replies; protocol 0x%02X->0x%02X; adversarial "
+                 "%s/%s refused; known-good after fuzz %s"
+                 % (res.get("idle_passed"), res.get("idle_rounds"),
+                    res.get("idle_distinct_states"),
+                    res.get("idle_distinct_replies"),
+                    res.get("protocol_before", 0), res.get("protocol_after", 0),
+                    res.get("adversarial_refused"),
+                    res.get("adversarial_cases"),
+                    res.get("known_good_after_fuzz")))
+    lines.append("  MILESTONE: %s" % res.get("milestone"))
+    return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
@@ -344,9 +448,20 @@ def run_attack(on_stage: Optional[Callable] = None,
                             "/".join(str(len(have["report%d" % i]))
                                      for i in range(3))))
 
-        # -- provenance: the LIVE half -------------------------------------
-        live_ok = _live_challenge(bridge, enum_deadline, stage)
+        # -- provenance: the LIVE half, and the M6 differential -------------
+        # The identity guard floors at MIN_LADDER_ROUNDS whatever the knob
+        # says: LADDER_ROUNDS=0 is the empty-list demonstration for the
+        # ADVERSARIAL counters, not a licence to skip layer 3.
+        idle = _live_challenge(bridge, enum_deadline, stage,
+                               rounds=max(LADDER_ROUNDS, MIN_LADDER_ROUNDS),
+                               constant=(control == "idle-constant"))
+        live_ok = idle["ok"]
         res["live_challenge"] = live_ok
+        res["idle_rounds"] = idle["rounds"]
+        res["idle_passed"] = idle["passed"]
+        res["idle_distinct_states"] = idle["distinct_states"]
+        res["idle_distinct_replies"] = idle["distinct_replies"]
+        res["idle_stateful"] = idle["stateful"]
         if not live_ok:
             raise Refused("the peer failed the live SET_IDLE/GET_IDLE "
                           "challenge -- it is not running this firmware")
@@ -444,20 +559,44 @@ def run_attack(on_stage: Optional[Callable] = None,
             res["live_challenge"] and res["descriptor_match"]
             and before in (0x00, 0x01))
         res["landed"] = landed and res["usb_hid_control_round_trip"]
-        res["milestone"] = ("M4" if res["usb_hid_control_round_trip"]
-                            else "M3" if res.get("booted") else "M0")
         res["protocol_downgraded"] = (before == 0x01 and after == 0x00)
+
+        # -- M7: adversarial input, then known-good traffic again -----------
+        adv = _adversarial(bridge, deadline, stage, LADDER_ROUNDS, after,
+                           benign=(control == "fuzz-benign"))
+        res["adversarial_cases"] = adv["cases"]
+        res["adversarial_refused"] = adv["refused"]
+        res["adversarial_detail"] = adv["kinds"]
+        res["known_good_after_fuzz"] = "%d/%d" % (adv["recheck_passed"],
+                                                  adv["recheck_rounds"])
+        res["adversarial_tolerated"] = adv["ok"]
+
+        # -- M6: the same request, two states, two different right answers --
+        # TWO independent differentials on the one seam, and BOTH are
+        # required, so each has its own knob: `idle-constant` kills the first
+        # and `withhold` kills the second, and neither touches M4.
+        res["stateful_readback"] = bool(res["idle_stateful"]
+                                        and res["protocol_downgraded"])
+
+        # -- the rung, DERIVED ----------------------------------------------
+        res["milestone"], res["rungs_met"] = grade(res)
+        res["interfaces"] = INTERFACE_INVENTORY
         stage("verdict", landed=landed, before=before, after=after,
-              as_expected=changed)
+              as_expected=changed, milestone=res["milestone"],
+              detail="rung derived from the ladder, not written down: " +
+                     " ".join("%s=%s" % (r, res["rungs_met"][r])
+                              for r, _ in LADDER))
         return res
     except Refused as exc:
         res["refused"] = str(exc)
         res["landed"] = False
-        stage("refused", reason=str(exc))
+        res["milestone"], res["rungs_met"] = grade(res)
+        stage("refused", reason=str(exc), milestone=res["milestone"])
         return res
     except KeyboardInterrupt:
         res["refused"] = "interrupted"
         res["landed"] = False
+        res["milestone"], res["rungs_met"] = grade(res)
         return res
     finally:
         bridge.close()
@@ -499,42 +638,192 @@ def _check_bind_marker(log_path: str, pid: int, port: int) -> None:
     raise Refused("our own emulator never logged %r" % want)
 
 
-def _live_challenge(bridge: Bridge, deadline: float, stage) -> bool:
-    """Layer 3: a value only a running guest can produce, chosen now.
+def _live_challenge(bridge: Bridge, deadline: float, stage,
+                    rounds: int = 3, constant: bool = False) -> Dict:
+    """Layer 3 *and* the M6 evidence: the same request, N different states.
 
-    QMK's `SET_IDLE` handler (`0x080071 94` -> `set_keyboard_idle`, storing at
+    QMK's `SET_IDLE` handler (`0x08007194` -> `set_keyboard_idle`, storing at
     `0x20000EE5`) takes the duration from **wValue's high byte**, and
     `GET_IDLE` reads the same variable back. So a byte picked at run time,
     pushed through the firmware's own handler and read back, is a challenge no
     recorded transcript can satisfy -- unlike the descriptor match, which is
     replayable by construction.
 
-    Three rounds, and the original value is restored afterwards.
+    That is also, exactly, M6: **one byte-identical request** (`GET_IDLE`,
+    wValue/wIndex/wLength all zero) asked at N different firmware states,
+    answering N different correct values that only the firmware's own store
+    can produce. The values are drawn WITHOUT replacement so a chance
+    collision cannot silently collapse two states into one, and the count of
+    distinct replies is asserted against the count of distinct states.
+
+    ``constant=True`` is the M6 falsification knob: identical input every
+    round. The round trip still passes; the differential must not.
     """
-    original = None
-    ok = True
-    for _ in range(3):
-        want = secrets.randbelow(255) + 1
+    out: Dict = {"rounds": 0, "passed": 0, "ok": False, "sent": [], "got": [],
+                 "distinct_states": 0, "distinct_replies": 0,
+                 "stateful": False, "constant_knob": constant}
+    fixed = secrets.randbelow(255) + 1
+    used: set = set()
+    for _ in range(max(0, rounds)):
+        if constant:
+            want = fixed
+        else:
+            while True:
+                want = secrets.randbelow(255) + 1
+                if want not in used:
+                    break
+            used.add(want)
+        out["rounds"] += 1
         kind, _ = ctrl(bridge, *SET_IDLE, want << 8, 0x0000, 0, deadline)
         if kind != "ok":
             stage("live-challenge", ok=False,
                   detail="SET_IDLE was not accepted (%s)" % kind)
-            return False
+            out["sent"].append(want)
+            out["got"].append(None)
+            break
+        kind, data = ctrl(bridge, *GET_IDLE, 0x0000, 0x0000, 1, deadline)
+        got = data[0] if (kind == "ok" and len(data) == 1) else None
+        out["sent"].append(want)
+        out["got"].append(got)
+        if got != want:
+            stage("live-challenge", ok=False, sent=want, got=got)
+            break
+        out["passed"] += 1
+
+    # N of N, with a floor. `passed == rounds` alone is satisfied by 0 == 0.
+    out["ok"] = (out["rounds"] >= MIN_LADDER_ROUNDS
+                 and out["passed"] == out["rounds"])
+    out["distinct_states"] = len(set(out["sent"]))
+    out["distinct_replies"] = len({g for g in out["got"] if g is not None})
+    # M6: two DIFFERENT states must give two DIFFERENT correct answers.
+    out["stateful"] = bool(out["ok"]
+                           and out["distinct_states"] >= 2
+                           and out["distinct_replies"] == out["distinct_states"])
+    if out["ok"]:
+        ctrl(bridge, *SET_IDLE, 0x0000, 0x0000, 0, deadline)
+        stage("live-challenge", ok=True, rounds=out["rounds"],
+              distinct_states=out["distinct_states"],
+              distinct_replies=out["distinct_replies"],
+              detail="%d of %d run-time-chosen bytes were stored and read "
+                     "back through QMK's own SET_IDLE/GET_IDLE handlers; the "
+                     "byte-identical GET_IDLE answered %d distinct values "
+                     "from %d distinct states"
+                     % (out["passed"], out["rounds"],
+                        out["distinct_replies"], out["distinct_states"]))
+    else:
+        stage("live-challenge", ok=False, rounds=out["rounds"],
+              passed=out["passed"],
+              detail="the N-of-N idle challenge did not pass (floor is %d "
+                     "rounds)" % MIN_LADDER_ROUNDS)
+    return out
+
+
+def _adversarial(bridge: Bridge, deadline: float, stage, rounds: int,
+                 protocol_after: int, benign: bool = False) -> Dict:
+    """M7: malformed EP0 traffic refused, then known-good traffic re-checked.
+
+    Three *kinds* of malformed request, each issued ``rounds`` times with a
+    different out-of-range index, so no single lucky refusal can carry the
+    rung:
+
+    * ``GET_DESCRIPTOR(HID REPORT, wIndex = 3, 4, 5 ...)`` -- there are three
+      HID interfaces; `0x08007678` does ``cmp r1,#2 ; bhi`` and takes the
+      not-handled path.
+    * ``GET_DESCRIPTOR(STRING, index 0x40+)`` -- past the firmware's string
+      table.
+    * an **unassigned HID class request** (``bRequest`` 0x0C, 0x0D ...): not in
+      QMK's dispatcher at all.
+
+    The oracle is "the firmware produced no payload". A bridge-level *error*
+    (`CTRL-TIMEOUT`) is NOT a refusal and is counted as a failure, because a
+    guest that has gone deaf would otherwise read as a guest that refuses.
+
+    Afterwards -- and this is the half that is missing from most of the fleet's
+    M7-shaped probes -- the known-good requests are re-issued and matched
+    **byte for byte** against what the same firmware answered before the
+    malformed traffic.
+
+    ``benign=True`` is the M7 falsification knob: same code path, same counts,
+    but every index is swapped for a VALID one the firmware does answer. The
+    refusal oracle must then go false, which is what shows it discriminates.
+    """
+    out: Dict = {"cases": 0, "refused": 0, "kinds": [], "benign_knob": benign,
+                 "recheck_rounds": 0, "recheck_passed": 0,
+                 "refusals_ok": False, "known_good_ok": False, "ok": False,
+                 "baseline_matches_image": False}
+    n = max(0, rounds)
+
+    # The known-good baseline, taken through the SAME `ctrl` path the recheck
+    # will use, and independently anchored to the bytes predicted from the
+    # image before the first boot -- so "still works afterwards" is not merely
+    # "still self-consistent afterwards".
+    known_good: Dict[str, bytes] = {}
+    anchored = True
+    for name, idx in (("report0", 0), ("report1", 1), ("report2", 2)):
+        kind, data = ctrl(bridge, *GET_DESCRIPTOR, DESC_REPORT << 8, idx,
+                          0x0100, deadline)
+        known_good[name] = data if kind == "ok" else b""
+        if not data or data != facts.descriptor(name):
+            anchored = False
+    out["baseline_matches_image"] = anchored
+    for i in range(n):
+        cases = [
+            ("report-index-%d" % (3 + i),
+             (GET_DESCRIPTOR[0], GET_DESCRIPTOR[1],
+              (DESC_REPORT << 8), 0 if benign else (3 + i), 0x40)),
+            ("string-index-%d" % (0x40 + i),
+             (GET_DESCRIPTOR[0], GET_DESCRIPTOR[1],
+              (DESC_STRING << 8) | (1 if benign else (0x40 + i)), 0x0409, 0x40)),
+            ("class-request-0x%02X" % (0x02 if benign else 0x0C + i),
+             (0xA1, 0x02 if benign else 0x0C + i, 0x0000, 0x0000, 1)),
+        ]
+        for name, (bm, req, val, idx, length) in cases:
+            kind, data = ctrl(bridge, bm, req, val, idx, length, deadline)
+            refused = (kind == "stall") or (kind == "ok" and not data)
+            out["cases"] += 1
+            out["refused"] += 1 if refused else 0
+            out["kinds"].append({"case": name, "reply": kind,
+                                 "bytes": len(data), "refused": refused})
+
+    # N of N with a floor -- and the floor is what stops `0 of 0` scoring.
+    out["refusals_ok"] = (out["cases"] >= 3 * MIN_LADDER_ROUNDS
+                          and out["refused"] == out["cases"])
+
+    # ... and known-good traffic still works, byte for byte.
+    for i in range(max(MIN_LADDER_ROUNDS, n)):
+        out["recheck_rounds"] += 1
+        ok = True
+        for name, idx in (("report0", 0), ("report1", 1), ("report2", 2)):
+            kind, data = ctrl(bridge, *GET_DESCRIPTOR, DESC_REPORT << 8, idx,
+                              0x0100, deadline)
+            if kind != "ok" or not data or data != known_good.get(name):
+                ok = False
+        kind, data = ctrl(bridge, *GET_PROTOCOL, 0x0000, 0x0000, 1, deadline)
+        if kind != "ok" or len(data) != 1 or data[0] != protocol_after:
+            ok = False
+        want = secrets.randbelow(255) + 1
+        kind, _ = ctrl(bridge, *SET_IDLE, want << 8, 0x0000, 0, deadline)
+        if kind != "ok":
+            ok = False
         kind, data = ctrl(bridge, *GET_IDLE, 0x0000, 0x0000, 1, deadline)
         if kind != "ok" or len(data) != 1 or data[0] != want:
-            stage("live-challenge", ok=False, sent=want,
-                  got=(data[0] if data else None))
             ok = False
-            break
-        if original is None:
-            original = want
-    if ok:
-        ctrl(bridge, *SET_IDLE, 0x0000, 0x0000, 0, deadline)
-        stage("live-challenge", ok=True,
-              detail="three run-time-chosen bytes were stored and read back "
-                     "through QMK's own SET_IDLE/GET_IDLE handlers -- a "
-                     "replayed transcript cannot do this")
-    return ok
+        out["recheck_passed"] += 1 if ok else 0
+    ctrl(bridge, *SET_IDLE, 0x0000, 0x0000, 0, deadline)
+
+    out["known_good_ok"] = (out["recheck_rounds"] >= MIN_LADDER_ROUNDS
+                            and out["recheck_passed"] == out["recheck_rounds"]
+                            and out["baseline_matches_image"])
+    out["ok"] = bool(out["refusals_ok"] and out["known_good_ok"])
+    stage("adversarial", ok=out["ok"], cases=out["cases"],
+          refused=out["refused"], recheck="%d/%d" % (out["recheck_passed"],
+                                                     out["recheck_rounds"]),
+          detail="%d malformed EP0 requests in three kinds, then %d rounds of "
+                 "byte-identical known-good traffic%s"
+                 % (out["cases"], out["recheck_rounds"],
+                    "  [BENIGN KNOB: the indices are VALID, so the refusal "
+                    "oracle must fail]" if benign else ""))
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -548,6 +837,9 @@ def main(argv: Optional[List[str]] = None) -> int:
                                    for kv in sorted(CONTROLS.items())))
     ap.add_argument("--log-dir", default=None)
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--ladder", action="store_true",
+                    help="also print the derived rung table (the RESULT line "
+                         "carries the rung either way)")
     try:
         args = ap.parse_args(argv)
     except SystemExit:
@@ -573,9 +865,14 @@ def main(argv: Optional[List[str]] = None) -> int:
               % ",".join(sorted(AUDIT_SKIP)))
     res = run_attack(on_stage=show, log_dir=args.log_dir,
                      control=args.control)
+    if args.ladder:
+        print(ladder_report(res))
+    # EMIT EVERYTHING that is not bulk. A fixed key tuple is exactly how this
+    # device's M6/M7 evidence went unread for a month: `protocol_downgraded`,
+    # `reject_wrong_interface` and `reject_bad_report_index` were all computed
+    # and all dropped here. A deny-list of bulky keys cannot do that again.
     print("RESULT:", json.dumps({k: v for k, v in res.items()
-                                 if k in ("booted", "landed",
-                                          "usb_hid_control_round_trip", "milestone")}))
+                                 if k not in RESULT_BULK}, sort_keys=True))
     return 0 if res.get("landed") else 1
 
 

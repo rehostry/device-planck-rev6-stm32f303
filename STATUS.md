@@ -1,10 +1,20 @@
-<!-- rehostry-census: milestone=M4 landed=true verdict=M4-OK verified=2026-08-28 method=live-run -->
+<!-- rehostry-census: milestone=M7 landed=true verdict=M4-OK verified=2026-09-01 method=live-run ladder=derived path=rehostry-planck-ladder note=M7-single-interface -->
 # STATUS — device-planck-rev6-stm32f303
 
-**Milestone reached: M4** — a real protocol round-trip over the firmware's own
-USB seam, with the emitted bytes matched byte-for-byte against a prediction
-committed before the first boot, plus an attack that lands on firmware-side
-evidence and three behavioural controls that do not.
+**Milestone reached: M7** — a real protocol round-trip over the firmware's own
+USB seam (M4), the *same* request answered differently from two attacker-chosen
+states (M6), and malformed EP0 traffic refused by the firmware's own STALL with
+known-good traffic still byte-identical afterwards (M7).
+
+**Nothing new was modelled to get here.** M4 was already measured; the M6 and
+M7 evidence was already being *computed* on every run and was dropped by a
+fixed four-key `RESULT:` tuple while `milestone` was assigned the string
+literal `"M4"`. The rung is now **derived** from a `LADDER` table
+(`attack.py`), so no header can disagree with the run it cites.
+
+Run it: `rehostry-planck ladder [--control ...]` — or the plain
+`rehostry-planck-attack`, which emits the same derived rung. The ladder is not
+an opt-in mode.
 
 | | |
 |---|---|
@@ -13,7 +23,7 @@ evidence and three behavioural controls that do not.
 | firmware | QMK on ChibiOS, raw `.bin`, **no symbols** |
 | core | the installed `halucinator@dev` in the shared `.venv-dev`; **no core changes** |
 | seam | USB HID — EP0 control + interrupt IN 0x81 / 0x82 / 0x83 |
-| tests | 30 structural tests, no emulator needed, all passing |
+| tests | 31 structural tests, no emulator needed, all passing |
 
 ---
 
@@ -85,6 +95,80 @@ order is checkable: the prediction commit is `ad83648`, authored
 over EP0, but that line is composed by the firmware's *main thread* after
 enumeration completes and pushed out on a *different* interface.
 
+### M6 — the same request, three states, three different right answers
+
+`GET_IDLE` (`bmRequestType 0xA1, bRequest 0x02, wValue 0, wIndex 0, wLength 1`)
+is issued **byte-identically** in every round. Between rounds the firmware is
+put into a different state by `SET_IDLE` with a byte drawn at run time
+(`secrets.randbelow`, **without replacement**, so a chance collision cannot
+quietly merge two states). QMK's own `set_keyboard_idle` (`0x08007194`) stores
+it at `0x20000EE5`; `GET_IDLE` reads that same variable back.
+
+The verdict asserts `distinct_replies == distinct_states >= 2` **and**
+`passed == rounds` with `rounds >= 3` — never `>= 1`, and never a bare
+`all(...)`.
+
+A second, independent state differential runs in the same seam: `GET_PROTOCOL`
+answers `0x01` before the attack's `SET_PROTOCOL(0)` and `0x00` after
+(`protocol_downgraded`). **Both are required for M6**, so each has its own
+knob — see Controls.
+
+Live run, 2026-09-01:
+
+```
+[live-challenge] 3 of 3 run-time-chosen bytes were stored and read back through
+                 QMK's own SET_IDLE/GET_IDLE handlers; the byte-identical
+                 GET_IDLE answered 3 distinct values from 3 distinct states
+                 ok=True rounds=3 distinct_states=3 distinct_replies=3
+```
+
+### M7 — malformed EP0 traffic refused, known-good traffic unharmed
+
+Nine malformed control transfers in three kinds, three distinct out-of-range
+values each:
+
+| kind | values | what the firmware did |
+|---|---|---|
+| `GET_DESCRIPTOR(HID REPORT, wIndex)` past the last interface | 3, 4, 5 | STALL |
+| `GET_DESCRIPTOR(STRING, index)` past the string table | 0x40, 0x41, 0x42 | STALL |
+| an unassigned HID class `bRequest` | 0x0C, 0x0D, 0x0E | STALL |
+
+Every refusal is the **firmware's own register write**, not a harness verdict —
+the model logs a STALL only when the guest sets `EP0`'s `STAT_TX`/`STAT_RX` to
+`STAT_STALL`:
+
+```
+UsbHost: the firmware STALLed 81 06 00 22 03 00 40 00 -- request REFUSED
+UsbHost: the firmware STALLed 81 06 40 03 09 04 40 00 -- request REFUSED
+UsbHost: the firmware STALLed a1 0c 00 00 00 00 01 00 -- request REFUSED
+   (9 in total, one per case)
+```
+
+Then the half most of this fleet's M7-shaped probes are missing: **known-good
+traffic is re-checked afterwards**, three rounds, each comparing all three HID
+report descriptors byte-for-byte against the bytes predicted from the image
+before the first boot, re-reading `GET_PROTOCOL`, and pushing a fresh random
+idle byte through `SET_IDLE`/`GET_IDLE`. `3/3`.
+
+A bridge-level timeout is explicitly **not** counted as a refusal: a guest that
+has gone deaf must not read as a guest that refuses.
+
+### M5 / M8 — undefined here, and that is a claim
+
+This device has **one** link to **one** peer: the USB wire, to the host. Its
+three HID *interfaces* (boot keyboard / NKRO / QMK console) are three
+descriptor sets multiplexed over that one bus, addressed by `wIndex` on the
+same EP0 dispatcher and served by the same ChibiOS USB driver. Two commands
+over one seam are one interface.
+
+**Keys that collapse into that one interface:**
+`usb_hid_control_round_trip`, `descriptor_match`, `live_challenge`,
+`reject_wrong_interface`, `reject_bad_report_index` and the interface-2 console
+read-back. None of them is a second link. The inventory comes from the
+firmware's **own configuration descriptor** read off the wire
+(`bNumInterfaces`, the three HID report descriptors it hands out) — implementing
+less here would not change what that descriptor says.
+
 ---
 
 ## The attack
@@ -149,6 +233,21 @@ asserts.
 | decoy on `0.0.0.0` (no emulator, no firmware) | replays a recorded transcript | refused at pre-flight |
 | decoy + `HAL_PLANCK_AUDIT_SKIP=preflight,bindmarker` | the port guards deliberately disabled | refused at the **identity challenge** |
 | `--control nopayload` (a typo) | — | `exit 2`; the real attack is **not** run |
+
+### Ladder controls — one knob per deciding term, both arms run 2026-09-01
+
+Each of these falsifies **exactly one** rung's deciding term and leaves the
+others standing. A knob that drives some other term while the verdict stays
+true is not a control.
+
+| arm | what it changes | rung emitted | why |
+|---|---|---|---|
+| `--control none` | — | **M7** | `idle 3/3, 3 distinct states -> 3 distinct replies; protocol 0x01->0x00; adversarial 9/9 refused; known-good after fuzz 3/3` |
+| `--control idle-constant` | `SET_IDLE` driven with the **same** byte every round | **M4** | `idle_distinct_states: 1`, `idle_stateful: false` — but `idle_passed: 3/3` and `usb_hid_control_round_trip: true`, so M4 and M7 survive. The M6 term and only the M6 term moved. |
+| `--control withhold` | `SET_PROTOCOL` never sent | **M4** | `protocol_downgraded: false` — the *other* M6 term. `idle_stateful` stays true, M7 stays true. |
+| `--control fuzz-benign` | every malformed index swapped for a **valid** one | **M6** | `adversarial_refused: 0/9`. The firmware answers valid indices, so the "no descriptor was produced" oracle goes false — which is what proves that oracle discriminates rather than being satisfied by anything. M4 and M6 untouched. |
+| `HAL_PLANCK_LADDER_ROUNDS=0` | the adversarial stage runs **zero** cases | **M6** | `adversarial_cases: 0, adversarial_tolerated: false`. `all([])` is vacuously `True`; the floor (`cases >= 3 * 3`) is what stops `0 of 0` scoring a perfect M7. Demonstrated live, not asserted. |
+| `--control no-usb-irq` | the **guest's** USB interrupt withheld | **M1** | host stack fully alive — bridge bound, greeted, connected, 225,486 SOF beats — and the guest produced **no descriptor at all**: `refused: "the firmware never produced a full descriptor set"`, `rungs_met M3..M7 all false`. Every rung above M1 is guest-derived. |
 
 The decoy is ~70 lines with no emulator and no firmware behind it; it answers the
 whole bridge protocol from a recording of this device's real descriptors and
