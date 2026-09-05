@@ -1,10 +1,18 @@
-<!-- rehostry-census: milestone=M7 landed=true verdict=M4-OK verified=2026-09-01 method=live-run ladder=derived path=rehostry-planck-ladder note=M7-single-interface -->
+<!-- rehostry-census: milestone=M8 landed=true verdict=M4-OK verified=2026-09-05 method=live-run ladder=derived path=rehostry-planck-attack note=parity-3of3-on-the-default-path-no-flags;M5-still-UNDEFINED-one-bus-one-peer -->
 # STATUS — device-planck-rev6-stm32f303
 
-**Milestone reached: M7** — a real protocol round-trip over the firmware's own
-USB seam (M4), the *same* request answered differently from two attacker-chosen
-states (M6), and malformed EP0 traffic refused by the firmware's own STALL with
-known-good traffic still byte-identical afterwards (M7).
+**Milestone reached: M8.** Interface parity is **3 / 3** — every interface the
+firmware's own CONFIGURATION descriptor declares completes a round trip in the
+firmware's own bytes.
+
+Below that: a real protocol round-trip over the firmware's own USB seam (M4),
+the *same* request answered differently from two attacker-chosen states (M6),
+and malformed EP0 traffic refused by the firmware's own STALL with known-good
+traffic still byte-identical afterwards (M7).
+
+**M5 remains UNDEFINED and that has not changed.** M5 asks about
+*independence*; M8 asks about *coverage*. See "M5 and M8 answer different
+questions" below — this is the whole reason the rung moved.
 
 **Nothing new was modelled to get here.** M4 was already measured; the M6 and
 M7 evidence was already being *computed* on every run and was dropped by a
@@ -23,7 +31,17 @@ an opt-in mode.
 | firmware | QMK on ChibiOS, raw `.bin`, **no symbols** |
 | core | the installed `halucinator@dev` in the shared `.venv-dev`; **no core changes** |
 | seam | USB HID — EP0 control + interrupt IN 0x81 / 0x82 / 0x83 |
-| tests | 31 structural tests, no emulator needed, all passing |
+| tests | 42 structural tests, no emulator needed, all passing |
+
+**The environment the 2026-09-05 runs were taken in** (playbook w29.1 — the wrong venv manufactures confident false demotions, so it is recorded rather than left to a naming convention):
+
+| | |
+|---|---|
+| venv | `/Users/user/Development/rehostry/.venv-dev` — what this file has always documented |
+| core | `/Users/user/Development/rehostry/halucinator/src/halucinator` @ `158c31ab`, resolved at run time by importing it, not by the venv's name |
+| bridge port | tcp/22140 (`HAL_PLANCK_BRIDGE_PORT`), ZMQ 6140/6141 |
+| box load | `uptime` 1.3–1.6 across every arm; no arm was taken under load |
+| ⚠ do NOT use | `venvs.noindex/planck-rev6-stm32f303` — the convenient naming convention is the wrong one (w29.1) |
 
 ---
 
@@ -153,21 +171,123 @@ idle byte through `SET_IDLE`/`GET_IDLE`. `3/3`.
 A bridge-level timeout is explicitly **not** counted as a refusal: a guest that
 has gone deaf must not read as a guest that refuses.
 
-### M5 / M8 — undefined here, and that is a claim
+### M5 and M8 answer different questions — corrected 2026-09-05
 
-This device has **one** link to **one** peer: the USB wire, to the host. Its
-three HID *interfaces* (boot keyboard / NKRO / QMK console) are three
-descriptor sets multiplexed over that one bus, addressed by `wIndex` on the
-same EP0 dispatcher and served by the same ChibiOS USB driver. Two commands
-over one seam are one interface.
+**What this file used to say, and why it was half wrong.** It said "M5 / M8 —
+undefined here", and gave *one* reason for *both*: one link, one peer, three
+`wIndex` values on one EP0 dispatcher. **That reason is correct, and it settles
+M5 only.**
 
-**Keys that collapse into that one interface:**
-`usb_hid_control_round_trip`, `descriptor_match`, `live_challenge`,
+- **M5 asks about INDEPENDENCE** — two interfaces, each with its own transport
+  endpoint and its own application logic, surviving §1a's operational test.
+  Every graded exchange here is an EP0 control transfer with `wIndex` selecting
+  the descriptor set, so they are one interface. **M5 stays UNDEFINED.**
+- **M8 asks about COVERAGE** — of everything the device *declares*, how much
+  does this rehost drive at M4? That needs an *independently derived inventory*
+  (Rule 1), not independent interfaces. One exists, and this file already
+  named it. **M8 is DEFINED, and it is met at 3/3.**
+
+"M8 undefined" is correct only when there is **no independently derived
+inventory to grade against** — not merely when the interfaces are
+non-independent. The fleet already grades this way:
+`device-ardupilot-matekf405` sits at **8/14** against ArduPilot's own
+capability bitmask while §1a rules all of MAVLink to be one interface.
+Fourteen declared capabilities, one independent interface, and nobody expects
+those numbers to agree. `RULES.md` §1b (2026-09-05) names this device as the
+open case; this is the answer.
+
+**M5 — undefined.** One link to one peer: the USB wire, to the host. The three
+HID interfaces (boot keyboard / NKRO / QMK console) are three descriptor sets
+multiplexed over that one bus, served by the same ChibiOS USB driver. Two
+commands over one seam are one interface. Keys that collapse into that one
+interface: `usb_hid_control_round_trip`, `descriptor_match`, `live_challenge`,
 `reject_wrong_interface`, `reject_bad_report_index` and the interface-2 console
-read-back. None of them is a second link. The inventory comes from the
-firmware's **own configuration descriptor** read off the wire
-(`bNumInterfaces`, the three HID report descriptors it hands out) — implementing
-less here would not change what that descriptor says.
+read-back. None of them is a second link.
+
+**M8 — defined, and met at 3/3.** Full derivation in `INVENTORY.md`; the
+per-interface obligations are registered in `PREDICTIONS.md`, and both were
+committed (`6357d2e`) **before** the gate that reads them existed.
+
+| | iface 0 | iface 1 | iface 2 |
+|---|---|---|---|
+| what it is | boot keyboard | QMK NKRO / shared | QMK console |
+| `bInterfaceSubClass` | **1 (boot)** | 0 | 0 |
+| report descriptor | 68 B | 182 B | 21 B |
+| IN endpoint | `0x81` | `0x82` | `0x83` |
+| `GET_PROTOCOL` at its `wIndex` | **honoured** (0x01) | **refused** | **refused** |
+| verdict | PASS 3/3 rounds | PASS 3/3 rounds | PASS 3/3 rounds |
+
+The denominator is `bNumInterfaces = 3`, **parsed at run time out of the 84
+CONFIGURATION bytes the guest returned**, not read from a table in this
+package. Implement fewer handlers and the interface is still declared, still
+walked, and still fails its own assertion.
+
+Each interface's *obligations* come from **its own declared bytes**, so the
+table follows the image rather than this file:
+
+* `wDescriptorLength` decides how many report-descriptor bytes it must return,
+  and a **run-time-chosen `wLength`** must come back truncated to exactly
+  `min(wLength, N)` — a truncation *the guest computes* (USB 2.0 §9.3.5). The
+  host model does not trim: it reads whole packets and stops on a short one, so
+  an 88-byte answer to `wLength = 88` on a 182-byte descriptor is the firmware
+  sending 64 + 24, not us cutting 128 down.
+* `bInterfaceSubClass` decides whether `GET_PROTOCOL` must be **honoured** or
+  **refused** (HID 1.11 §7.2.5, defined only for the boot subclass).
+
+That second one is the discrimination a single global handler cannot fake: the
+*same* request, differing only in `wIndex`, is honoured on interface 0 and
+refused on interfaces 1 and 2, and which is which is fixed by a byte the guest
+itself emitted. Three rounds, fresh `wLength` each round, the interfaces
+visited in a fresh random order, `passed == rounds`.
+
+#### The stricter reading, reported alongside: 2/3
+
+`interface_parity_endpoint_traffic` counts only interfaces whose own interrupt
+IN endpoint was seen carrying firmware bytes. It is **2/3** — `0x81`'s
+all-zero boot reports and `0x83`'s `"USB configured.\n"`; `0x82` has never
+carried anything.
+
+It is **not** the graded criterion, for two reasons stated before the run:
+
+1. §0 defines M4 as *"a request the device would answer on hardware is answered
+   by the firmware's own bytes"* — a request and a response. An unsolicited IN
+   report is not a round trip. And this build **does not type on real hardware
+   either**: its keymap is 48 × `KC_TRANSPARENT` (Known limitations 1,
+   registered in `PROVENANCE.md` §3.4 before the first boot). A full 4 × 12
+   press/release sweep drives the firmware's own scan — 16,611 scans, 132,888
+   row selects — and emits no keycode. Grading the rehost against behaviour the
+   artifact does not have would measure the vendor, not the rehost.
+2. **The number is timing-dependent.** `PREDICTIONS.md` registered it as `1/3`
+   from a probe where `0x81` had not yet flushed; the graded runs say `2/3`,
+   with no code change. A figure that moves when nothing moves is disclosure,
+   not a measurement. The prediction was wrong and is corrected in place rather
+   than quietly re-worded.
+
+#### The three checks this gate had to survive
+
+| check | how it was run | result |
+|---|---|---|
+| **Vacuity** — can it emit M8 for an empty or constant inventory? `all([])` is vacuously true and has scored a dead arm as perfect twice on this fleet | five degenerate CONFIGURATION descriptors fed to `_parity` directly, plus the live `--control no-usb-irq` arm | every one **faults** with `inventory: []` and `parity: "unmeasured"`. Never `0/0`, which would pass `len(passed) == size` |
+| **Strictness** — parity strict or satisfied by a subset? | `--control parity-wrong-index`, live | `1/3`, `interface_parity_full: false`, milestone **M7**. The verdict is `len(passed) == inventory_size` with `inventory_size > 0` required in its own right |
+| **Can OUR OWN model shrink the denominator?** | a CONFIGURATION descriptor **truncated after interface 0 while still declaring three** | **faults**, rather than grading 1/1 as parity. Separately, the whole 84 bytes gate `descriptor_match`, which is the M3 rung and an input to `landed`, so a substituted descriptor drops the run to M1 rather than making parity easier |
+
+#### Both arms of the M8 knob
+
+`--control parity-wrong-index` sends every parity request to `wIndex = 0` while
+keeping its expectation derived from the interface it was *supposed* to
+address. Interfaces 1 and 2 then get interface 0's answers — 68 bytes, and
+`GET_PROTOCOL` honoured rather than refused — and fail their own obligations.
+**The predicate is identical on both arms; only the `wIndex` changes** (this is
+deliberately not playbook w33.1's inert shape, where a control arm is graded by
+an easier predicate).
+
+```
+live      parity=3/3  interfaces_passed=[0,1,2]  M8=True   milestone M8
+knob      parity=1/3  interfaces_passed=[0]      M8=False  milestone M7
+                      M1/M3/M4/M6/M7 identical on both arms
+```
+
+It falsifies exactly the deciding term and nothing else.
 
 ---
 
@@ -234,7 +354,9 @@ asserts.
 | decoy + `HAL_PLANCK_AUDIT_SKIP=preflight,bindmarker` | the port guards deliberately disabled | refused at the **identity challenge** |
 | `--control nopayload` (a typo) | — | `exit 2`; the real attack is **not** run |
 
-### Ladder controls — one knob per deciding term, both arms run 2026-09-01
+### Ladder controls — one knob per deciding term, both arms run
+
+Every row below was re-run live on **2026-09-05** except where dated 2026-09-01.
 
 Each of these falsifies **exactly one** rung's deciding term and leaves the
 others standing. A knob that drives some other term while the verdict stays
@@ -248,6 +370,8 @@ true is not a control.
 | `--control fuzz-benign` | every malformed index swapped for a **valid** one | **M6** | `adversarial_refused: 0/9`. The firmware answers valid indices, so the "no descriptor was produced" oracle goes false — which is what proves that oracle discriminates rather than being satisfied by anything. M4 and M6 untouched. |
 | `HAL_PLANCK_LADDER_ROUNDS=0` | the adversarial stage runs **zero** cases | **M6** | `adversarial_cases: 0, adversarial_tolerated: false`. `all([])` is vacuously `True`; the floor (`cases >= 3 * 3`) is what stops `0 of 0` scoring a perfect M7. Demonstrated live, not asserted. |
 | `--control no-usb-irq` | the **guest's** USB interrupt withheld | **M1** | host stack fully alive — bridge bound, greeted, connected, 225,486 SOF beats — and the guest produced **no descriptor at all**: `refused: "the firmware never produced a full descriptor set"`, `rungs_met M3..M7 all false`. Every rung above M1 is guest-derived. |
+| `--control parity-wrong-index` | every **parity** request addressed to `wIndex 0`, expectation still derived from the interface it should have addressed | **M7** | `interface_parity: 1/3`, `interfaces_passed: [0]`, `interface_parity_full: false`. M1/M3/M4/M6/M7 identical to the live arm — the knob moves the M8 term and nothing else. The predicate is the **same** on both arms; only the `wIndex` changes (deliberately not playbook w33.1's inert shape). Run live 2026-09-05. |
+| **firmware moved off disk** | `planck.bin` renamed aside, everything else identical | **M0** | ADVERSARIAL attack 1. `booted: false`, `refused: "never connected to the bridge on tcp/22140"`, `interface_parity` never set. The dead arm prints the **floor**, not a constant the guard would count as a wall (playbook w31/w36). Image restored and re-hashed: `cac8ac4d…86b92b`. Run live 2026-09-05. |
 
 The decoy is ~70 lines with no emulator and no firmware behind it; it answers the
 whole bridge protocol from a recording of this device's real descriptors and

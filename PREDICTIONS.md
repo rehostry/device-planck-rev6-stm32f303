@@ -110,9 +110,24 @@ times:
     behaviour the real device does not have either.
   - The harness nevertheless reports a **second, stricter fraction**
     (`interface_parity_endpoint_traffic`) counting only interfaces whose own IN
-    endpoint was seen carrying firmware bytes. It is **1 / 3** — interface 2's
-    console line — and it is printed next to the graded fraction precisely so
-    `3/3` cannot be misread as "the keyboard types".
+    endpoint was seen carrying firmware bytes. It is printed next to the graded
+    fraction precisely so `3/3` cannot be misread as "the keyboard types".
+
+  **⚠ This prediction was written as `1 / 3` and the live runs say `2 / 3`. I
+  was wrong, and the correction is more interesting than the prediction.**
+  I registered 1/3 from a probe run in which only endpoint `0x83` had flushed
+  by the time `REPORTS` was sampled. Interface 0 *does* transmit on `0x81` —
+  8-byte boot-keyboard reports that are **all zero**, which is QMK correctly
+  reporting "no keys held" — so on every graded run so far the fraction is
+  `2/3`, not `1/3`. Interface 1 (`0x82`) has never been observed carrying
+  anything.
+
+  The correction cuts against this figure rather than for it: **the endpoint
+  fraction is timing-dependent** — 1/3 or 2/3 depending on when the host model
+  last drained, with no code change — which is a second, independent reason it
+  is not the graded criterion. A number that moves when nothing moves is not a
+  measurement. It is reported for disclosure, and the graded fraction is the
+  control-transfer one.
 - **`SET_IDLE` / `GET_IDLE` on interface 1 does not store.** Interface 1 returns
   `0x00` for any value written, while interfaces 0 and 2 store and return their
   own attacker-chosen byte. Recorded here before the run so the result is a
