@@ -521,3 +521,116 @@ def test_matrix_model_reads_high_until_a_held_key_is_scanned():
     m.release(0, 0)
     m.press(1, 0)
     assert read_col() == 1
+
+
+# ---------------------------------------------------------------------------
+# M8 -- parity over the inventory the guest declares (added 2026-09-05)
+# ---------------------------------------------------------------------------
+class _DeadBridge:
+    """No guest at all: every request refuses."""
+
+    def cmd(self, text, deadline):
+        raise attack_mod.Refused("no guest")
+
+
+def _stage(name, **kw):
+    pass
+
+
+def _parity_verdict(par):
+    """The exact expression `run_attack` uses for `interface_parity_full`."""
+    return bool(not par["fault"]
+                and (par["declared"] or 0) > 0
+                and par["rounds"] >= attack_mod.MIN_PARITY_ROUNDS
+                and len(par["passed"]) == (par["declared"] or 0))
+
+
+def test_parity_cannot_pass_on_an_empty_or_inconsistent_inventory():
+    """`all([])` is vacuously True and has scored a dead arm as perfect twice
+    on this fleet.  The degenerate inputs must FAULT, not score 0/0 as parity.
+
+    The fourth case is the one that matters most: a CONFIGURATION descriptor
+    truncated after interface 0 while still declaring three.  Grading that as
+    1/1 would let our own model shrink the denominator, which is precisely what
+    Rule 1 forbids.  It really happened on `device-bdn9-stm32f072`.
+    """
+    hdr3 = bytes.fromhex("09025400030100a0fa")      # bNumInterfaces = 3
+    iface0 = bytes.fromhex("090400000103010100")
+    cases = {
+        "empty": b"",
+        "header only, bNumInterfaces=0": bytes.fromhex("090200000000a0fa"),
+        "declares 3, no INTERFACE records": hdr3,
+        "declares 0, one INTERFACE record":
+            bytes.fromhex("09021200000100a0fa") + iface0,
+        "TRUNCATED after iface 0 while declaring 3": hdr3 + iface0,
+    }
+    for label, cfg in cases.items():
+        par = attack_mod._parity(_DeadBridge(), 0.0, _stage, cfg, 3)
+        assert par["fault"], "%s did not fault" % label
+        assert par["inventory"] == [], label
+        assert par["parity"] == "unmeasured", label
+        assert _parity_verdict(par) is False, "%s scored M8" % label
+
+
+def test_parity_is_strict_and_never_passes_on_a_subset():
+    for declared, passed in ((3, [0]), (3, [0, 1]), (3, []), (2, [0]),
+                             (0, []), (1, [])):
+        par = {"fault": None, "declared": declared, "rounds": 3,
+               "passed": passed}
+        assert _parity_verdict(par) is (declared > 0
+                                        and len(passed) == declared)
+
+
+def test_parity_needs_n_of_n_rounds_not_one():
+    """Rule 2: an oracle satisfied by a single exchange cannot tell a working
+    interface from one that answers once and goes deaf."""
+    for rounds in range(0, attack_mod.MIN_PARITY_ROUNDS):
+        par = {"fault": None, "declared": 3, "rounds": rounds,
+               "passed": [0, 1, 2]}
+        assert _parity_verdict(par) is False, rounds
+    assert _parity_verdict({"fault": None, "declared": 3,
+                            "rounds": attack_mod.MIN_PARITY_ROUNDS,
+                            "passed": [0, 1, 2]}) is True
+
+
+def test_m8_is_on_the_ladder_and_m5_is_not():
+    """RULES.md §1b: independence governs M5, coverage governs M8.  M5 stays
+    undefined here (one bus, one peer) and must never be emitted; M8 is defined
+    against `bNumInterfaces` and must be gradeable."""
+    rungs = [r for r, _ in attack_mod.LADDER]
+    assert "M5" not in rungs
+    assert rungs[-1] == "M8"
+    full = {"booted": True, "descriptor_match": True,
+            "usb_hid_control_round_trip": True, "stateful_readback": True,
+            "adversarial_tolerated": True, "interface_parity_full": True}
+    assert attack_mod.grade(full)[0] == "M8"
+    assert attack_mod.grade({**full, "interface_parity_full": False})[0] == "M7"
+    assert attack_mod.INTERFACE_INVENTORY["m5_defined"] is False
+    assert attack_mod.INTERFACE_INVENTORY["m8_defined"] is True
+    # The declared count is filled in from the guest every run; a hard-coded
+    # one here would be exactly the denominator Rule 1 forbids.
+    assert attack_mod.INTERFACE_INVENTORY["m8_declared"] is None
+
+
+def test_parity_obligations_come_from_the_guests_own_bytes():
+    """The per-interface obligations must be read off the descriptor, so that
+    changing the image changes the table.  A hand-written {0: 68, 1: 182}
+    would be the artifact-derived predicate Rule 1 forbids."""
+    import yaml
+    from rehostry_planck import paths as _paths
+    with open(_paths.configs_dir() / "planck_facts.yaml") as fh:
+        cfg = bytes.fromhex(yaml.safe_load(fh)["usb"]["config_descriptor"])
+    parsed = attack_mod._parse_interfaces(cfg)
+    assert cfg[4] == len(parsed) == 3
+    assert [f["report_len"] for f in parsed] == [68, 182, 21]
+    assert [f["sub"] for f in parsed] == [1, 0, 0]
+    # ... and a DIFFERENT image gives a different table, with no code change.
+    grown = (bytes.fromhex("09025400040100a0fa")
+             + bytes.fromhex("090400000103010100")
+             + bytes.fromhex("092111010001220A00")
+             + bytes.fromhex("090401000103000000")
+             + bytes.fromhex("09211101000122FF01"))
+    g = attack_mod._parse_interfaces(grown)
+    assert grown[4] == 4 and len(g) == 2      # declares 4, ships 2 -> a fault
+    assert [f["report_len"] for f in g] == [10, 511]
+    assert [f["sub"] for f in g] == [1, 0]

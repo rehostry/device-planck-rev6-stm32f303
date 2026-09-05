@@ -89,6 +89,16 @@ CONTROLS = {
                    "so the 'no descriptor was produced' oracle must go false "
                    "-- proving that oracle discriminates rather than being "
                    "satisfied by anything. M4 and M6 must survive.",
+    "parity-wrong-index": "the M8 knob. Every request the PARITY phase makes "
+                          "is addressed to wIndex 0 while its expectation is "
+                          "still derived from the interface it was supposed "
+                          "to address. Interfaces 1 and 2 then receive "
+                          "interface 0's answers -- 68 bytes, GET_PROTOCOL "
+                          "honoured rather than refused -- and fail their own "
+                          "obligations. Parity must fall to 1/3 and M8 must "
+                          "go false while M7 stays true. The PREDICATE IS "
+                          "IDENTICAL ON BOTH ARMS (playbook w33.1); only the "
+                          "wIndex the request carries changes.",
 }
 
 #: Rule 2 -- no one-shot oracles. Every differential and every refusal below is
@@ -247,36 +257,95 @@ DESC_REPORT, DESC_STRING = 0x22, 0x03
 #: the milestone is the last rung whose key is true with every earlier key true,
 #: so a term that goes false drops the rung and is visible in ``rungs_met``.
 #:
-#: **M5 and M8 are deliberately absent and that is a claim, not an omission.**
-#: This device has exactly ONE link to exactly one peer: the USB wire, to the
-#: host. Its three HID *interfaces* (boot keyboard / NKRO / QMK console) are
-#: three descriptor sets multiplexed over that one bus, addressed by wIndex on
-#: the same EP0 dispatcher and served by the same ChibiOS USB driver -- "two
+#: **M5 is deliberately absent and that is a claim, not an omission.** This
+#: device has exactly ONE link to exactly one peer: the USB wire, to the host.
+#: Its three HID *interfaces* (boot keyboard / NKRO / QMK console) are three
+#: descriptor sets multiplexed over that one bus, addressed by wIndex on the
+#: same EP0 dispatcher and served by the same ChibiOS USB driver -- "two
 #: commands over one seam are one interface". So `usb_hid_control_round_trip`,
 #: `descriptor_match`, `live_challenge` and the console read-back all collapse
-#: into ONE interface, and M5/M8 are undefined here rather than unmet.
+#: into ONE interface, and **M5 is undefined here rather than unmet**.
+#:
+#: **M8 is a different question and it IS defined here** (RULES.md §1b,
+#: 2026-09-05). M5 asks about INDEPENDENCE; M8 asks about COVERAGE -- of
+#: everything the device *declares*, how much does this rehost drive at M4?
+#: The declared inventory is `bNumInterfaces = 3` in the firmware's own
+#: CONFIGURATION descriptor, parsed at run time out of the bytes the guest
+#: returns, and it does not shrink when we implement fewer handlers. A device
+#: can be at full parity while having one §1a-independent interface; nobody
+#: expects those two numbers to agree. See INVENTORY.md and PREDICTIONS.md,
+#: both committed before this gate existed.
 LADDER: Tuple[Tuple[str, str], ...] = (
     ("M1", "booted"),
     ("M3", "descriptor_match"),
     ("M4", "usb_hid_control_round_trip"),
     ("M6", "stateful_readback"),
     ("M7", "adversarial_tolerated"),
+    ("M8", "interface_parity_full"),
 )
 
-#: One link, one peer -- see the LADDER note. Written down so a census can read
-#: it rather than infer it from the number of `*_round_trip` keys, which has
-#: over-counted on four devices in this fleet.
+#: Written down so a census can read it rather than infer it from the number of
+#: `*_round_trip` keys, which has over-counted on four devices in this fleet.
+#: The M8 numbers here are placeholders describing the SOURCE; the run replaces
+#: them with what it parsed out of the guest (`res["interfaces"]`).
 INTERFACE_INVENTORY = {
-    # Source: the FIRMWARE'S OWN configuration descriptor, read off the wire
-    # during enumeration -- bNumInterfaces and the three HID report
-    # descriptors it hands out. Not "what we implemented": if we implemented
-    # less the descriptor would still say the same thing.
+    # -- M5: independence. One bus, one peer.
     "links": ["USB full-speed device (EP0 control + IN 0x81/0x82/0x83)"],
     "count": 1,
     "m5_defined": False,
     "why": "one bus, one peer; interfaces 0/1/2 are wIndex values on the same "
            "EP0 dispatcher, not separate links",
+    # -- M8: coverage of the DECLARED inventory. A different question (§1b).
+    "m8_defined": True,
+    "m8_source": "bNumInterfaces in the firmware's own CONFIGURATION "
+                 "descriptor, parsed at run time from the bytes the guest "
+                 "returns -- not 'what we implemented'",
+    "m8_declared": None,          # filled in from the guest, every run
+    "shared_substrate": "one USB device peripheral, one enumeration, one "
+                        "ChibiOS driver; breaking it breaks all three "
+                        "interfaces at once",
+    "not_interfaces": ["SOF frame clock", "the GPIO key matrix (a peer the "
+                       "firmware masters, not a party exchanging structured "
+                       "messages)"],
 }
+
+#: Rule 2 -- the parity phase repeats every per-interface obligation this many
+#: times with a fresh run-time-chosen wLength and a fresh interface order.
+MIN_PARITY_ROUNDS = 3
+
+
+def _parse_interfaces(cfg: bytes) -> List[Dict]:
+    """Enumerate the interfaces the guest's OWN CONFIGURATION descriptor declares.
+
+    This is the registered inventory (`INVENTORY.md`).  It is walked out of the
+    bytes the device returned, not read from a table in this package: a USB
+    configuration descriptor is exactly a device's published statement of the
+    interfaces it offers, and it cannot shrink because we implemented fewer
+    handlers.  Drop a handler and the interface is still declared here, still
+    enumerated, and still fails its assertion.
+
+    Each interface's *obligations* are derived from its own declared bytes --
+    ``bInterfaceSubClass`` decides whether GET_PROTOCOL must be honoured or
+    refused, and the HID descriptor's ``wDescriptorLength`` decides how many
+    report-descriptor bytes it must return.
+    """
+    out: List[Dict] = []
+    cur: Optional[Dict] = None
+    i = 0
+    while i + 1 < len(cfg):
+        blen, btype = cfg[i], cfg[i + 1]
+        if blen == 0:
+            break
+        if btype == 0x04 and i + 8 <= len(cfg):                 # INTERFACE
+            cur = {"num": cfg[i + 2], "cls": cfg[i + 5], "sub": cfg[i + 6],
+                   "proto": cfg[i + 7], "eps": [], "report_len": None}
+            out.append(cur)
+        elif btype == 0x05 and cur is not None and i + 6 <= len(cfg):  # ENDPOINT
+            cur["eps"].append(cfg[i + 2])
+        elif btype == 0x21 and cur is not None and i + 9 <= len(cfg):  # HID
+            cur["report_len"] = int.from_bytes(cfg[i + 7:i + 9], "little")
+        i += blen
+    return out
 
 
 def grade(res: Dict) -> Tuple[str, Dict[str, bool]]:
@@ -293,7 +362,7 @@ def grade(res: Dict) -> Tuple[str, Dict[str, bool]]:
 #: Keys too bulky (or too noisy) for a one-line RESULT:. Everything else is
 #: emitted -- see the note in ``main``.
 RESULT_BULK = {"descriptors", "stages", "console", "log",
-               "adversarial_detail", "control_description"}
+               "adversarial_detail", "control_description", "parity_detail"}
 
 
 def ladder_report(res: Dict) -> str:
@@ -304,8 +373,18 @@ def ladder_report(res: Dict) -> str:
         lines.append("  %-3s %-30s %s" % (rung, key,
                                           "PASS" if met.get(rung) else "--"))
     inv = res.get("interfaces") or INTERFACE_INVENTORY
-    lines.append("  M5/M8 undefined: %d interface -- %s"
+    lines.append("  M5 undefined: %d interface -- %s"
                  % (inv["count"], inv["why"]))
+    lines.append("  M8 DEFINED (RULES.md §1b -- coverage, not independence): "
+                 "parity %s over bNumInterfaces=%s from the guest's own "
+                 "CONFIGURATION descriptor; passed %s%s"
+                 % (res.get("interface_parity", "unmeasured"),
+                    inv.get("m8_declared"), res.get("interfaces_passed"),
+                    ("   [HARNESS FAULT: %s]" % res["parity_fault"])
+                    if res.get("parity_fault") else ""))
+    lines.append("  M8 stricter reading (interrupt-IN traffic per interface, "
+                 "NOT the graded criterion): %s"
+                 % res.get("interface_parity_endpoint_traffic", "unmeasured"))
     lines.append("  evidence: idle %s/%s rounds, %s distinct states -> %s "
                  "distinct replies; protocol 0x%02X->0x%02X; adversarial "
                  "%s/%s refused; known-good after fuzz %s"
@@ -562,8 +641,10 @@ def run_attack(on_stage: Optional[Callable] = None,
         res["protocol_downgraded"] = (before == 0x01 and after == 0x00)
 
         # -- M7: adversarial input, then known-good traffic again -----------
+        t_adv = time.time()
         adv = _adversarial(bridge, deadline, stage, LADDER_ROUNDS, after,
                            benign=(control == "fuzz-benign"))
+        adv_elapsed = time.time() - t_adv
         res["adversarial_cases"] = adv["cases"]
         res["adversarial_refused"] = adv["refused"]
         res["adversarial_detail"] = adv["kinds"]
@@ -578,9 +659,49 @@ def run_attack(on_stage: Optional[Callable] = None,
         res["stateful_readback"] = bool(res["idle_stateful"]
                                         and res["protocol_downgraded"])
 
+        # -- M8: parity over the inventory the guest itself declares ---------
+        # Runs LAST, and sends only reads (GET_DESCRIPTOR / GET_PROTOCOL /
+        # REPORTS).  Re-checked against every control this device already has
+        # (playbook w33.2): `withhold` claims SET_PROTOCOL was never sent and
+        # `wrong-interface` claims it went only to interface 1 -- this phase
+        # transmits no SET_PROTOCOL and no SET_IDLE, so neither claim is
+        # contradicted by adding it.
+        # The budget is DERIVED from this run's own demonstrated throughput --
+        # the adversarial phase made a comparable number of control transfers
+        # just now -- rather than being a fixed cap.  A fixed cap is how a
+        # slow-but-correct answer gets recorded as a timeout on a loaded box
+        # (playbook w33.3); the floor keeps an unmeasurably fast arm honest.
+        par_deadline = time.time() + max(120.0, 4.0 * adv_elapsed)
+        stage("parity-budget",
+              detail="%.0f s, derived as max(120, 4x the %.1f s the "
+                     "adversarial phase took on this box)"
+                     % (par_deadline - time.time(), adv_elapsed))
+        par = _parity(bridge, par_deadline, stage, have["config"],
+                      max(LADDER_ROUNDS, MIN_PARITY_ROUNDS),
+                      wrong_index=(control == "parity-wrong-index"))
+        res["inventory"] = par["inventory"]
+        res["inventory_size"] = par["declared"] or 0
+        res["interface_parity"] = par["parity"]
+        res["interfaces_passed"] = par["passed"]
+        res["interface_parity_endpoint_traffic"] = par["endpoint_parity"]
+        res["parity_rounds"] = par["rounds"]
+        res["parity_detail"] = par["per_interface"]
+        if par["fault"]:
+            res["parity_fault"] = par["fault"]
+        # STRICT, and it cannot pass on an empty inventory: `len([]) == 0` is
+        # True, so `inventory_size` must be positive in its own right.  That is
+        # the `all([])` hole in the shape it actually takes here.
+        res["interface_parity_full"] = bool(
+            not par["fault"]
+            and res["inventory_size"] > 0
+            and par["rounds"] >= MIN_PARITY_ROUNDS
+            and len(par["passed"]) == res["inventory_size"])
+
         # -- the rung, DERIVED ----------------------------------------------
         res["milestone"], res["rungs_met"] = grade(res)
-        res["interfaces"] = INTERFACE_INVENTORY
+        inv = dict(INTERFACE_INVENTORY)
+        inv["m8_declared"] = res["inventory_size"]
+        res["interfaces"] = inv
         stage("verdict", landed=landed, before=before, after=after,
               as_expected=changed, milestone=res["milestone"],
               detail="rung derived from the ladder, not written down: " +
@@ -823,6 +944,175 @@ def _adversarial(bridge: Bridge, deadline: float, stage, rounds: int,
                  % (out["cases"], out["recheck_rounds"],
                     "  [BENIGN KNOB: the indices are VALID, so the refusal "
                     "oracle must fail]" if benign else ""))
+    return out
+
+
+# ---------------------------------------------------------------------------
+# M8 -- parity over the inventory the guest itself declares
+# ---------------------------------------------------------------------------
+def _parity(bridge: Bridge, deadline: float, stage, cfg: bytes, rounds: int,
+            wrong_index: bool = False) -> Dict:
+    """Grade EVERY interface the guest's own CONFIGURATION descriptor declares.
+
+    The denominator is `bNumInterfaces`, read out of the bytes the guest
+    returned this run (`INVENTORY.md`).  It is not ours to shrink: implement
+    fewer handlers and the interface is still declared, still walked, and still
+    fails its own assertion.
+
+    Each interface's obligations are derived from *its own* declared bytes
+    (`PREDICTIONS.md`), so the table follows the image rather than this file:
+
+      * `wDescriptorLength = N`  ->  `GET_DESCRIPTOR(REPORT, wIndex=i)` must
+        return exactly `min(wLength, N)` bytes for a **run-time-chosen**
+        `wLength`, and they must be the first `min(wLength, N)` bytes of the
+        full descriptor (USB 2.0 §9.3.5 -- the device sends the shorter of the
+        two, which is a truncation *the guest computes*);
+      * `bInterfaceSubClass == 1`  ->  `GET_PROTOCOL` at that `wIndex` must be
+        HONOURED (HID 1.11 §7.2.5, defined only for the boot subclass);
+      * `bInterfaceSubClass == 0`  ->  it must be REFUSED, leaking 0 bytes.
+
+    The lengths differ (68/182/21) and the subclass differs, so a handler that
+    ignores `wIndex` answers two of the three wrongly.  That is what makes this
+    a per-interface test rather than one test run three times, and it is what
+    `--control parity-wrong-index` falsifies.
+    """
+    out: Dict = {"declared": None, "walked": 0, "rounds": 0, "passed": [],
+                 "parity": "unmeasured", "fault": None, "per_interface": {},
+                 "inventory": [], "endpoint_parity": "unmeasured"}
+
+    # -- the denominator, and the guards that stop US shrinking it ----------
+    declared = cfg[4] if len(cfg) > 4 else 0
+    ifaces = _parse_interfaces(cfg)
+    out["declared"], out["walked"] = declared, len(ifaces)
+    if declared <= 0 or len(ifaces) != declared:
+        # "Cannot measure" must never return the same value as "measured and it
+        # was bad" (playbook w29.2).  This is a HARNESS FAULT: it refuses to
+        # grade rather than grading a smaller set, and `all([])` -- vacuously
+        # True, and the thing that has scored a dead arm as perfect twice on
+        # this fleet -- can never be reached from here.
+        out["fault"] = ("bNumInterfaces=%s but %d INTERFACE descriptor(s) were "
+                        "walked out of the same %d bytes -- refusing to grade "
+                        "parity against a denominator we cannot trust"
+                        % (declared, len(ifaces), len(cfg)))
+        stage("parity", ok=False, fault=out["fault"])
+        return out
+
+    out["inventory"] = [
+        {"interface": f["num"], "subclass": f["sub"],
+         "report_descriptor_len": f["report_len"],
+         "endpoints": ["0x%02x" % e for e in f["eps"]]} for f in ifaces]
+    stage("inventory",
+          detail="%d interface(s) parsed from the guest's own CONFIGURATION "
+                 "descriptor (bNumInterfaces=%d): %s"
+                 % (len(ifaces), declared,
+                    "; ".join("iface %d subclass %d, %s-byte report desc, "
+                              "EP 0x%02x"
+                              % (f["num"], f["sub"], f["report_len"],
+                                 f["eps"][0] if f["eps"] else 0)
+                              for f in ifaces)))
+
+    # -- the full descriptors, once, against the PRE-BOOT prediction --------
+    full: Dict[int, bytes] = {}
+    for f in ifaces:
+        n = f["num"]
+        kind, data = ctrl(bridge, *GET_DESCRIPTOR, 0x2200, n, 255, deadline)
+        full[n] = data if kind == "ok" else b""
+        try:
+            predicted = facts.descriptor("report%d" % n)
+        except (KeyError, IndexError):
+            predicted = None            # an interface the image grew: graded
+        out["per_interface"][str(n)] = {
+            "subclass": f["sub"],
+            "declared_report_len": f["report_len"],
+            "full_read_len": len(full[n]),
+            # guest-derived: the length it must return is the length ITS OWN
+            # HID descriptor declared, this run.
+            "full_len_matches_declaration": len(full[n]) == f["report_len"],
+            "prediction_available": predicted is not None,
+            "matches_pre_boot_prediction": (predicted is not None
+                                            and full[n] == predicted),
+            "rounds": 0, "rounds_passed": 0,
+        }
+
+    # -- R rounds, fresh wLength and fresh interface order in each ----------
+    order = [f["num"] for f in ifaces]
+    rng = secrets.SystemRandom()
+    for _ in range(rounds):
+        rng.shuffle(order)
+        by_num = {f["num"]: f for f in ifaces}
+        for n in order:
+            f = by_num[n]
+            pi = out["per_interface"][str(n)]
+            pi["rounds"] += 1
+            decl = f["report_len"] or 0
+            want = 1 + secrets.randbelow(decl) if decl else 1
+            # THE KNOB.  The expectation stays derived from interface `n`;
+            # only the wIndex the request carries changes.  Same predicate on
+            # both arms (playbook w33.1).
+            addr = 0 if wrong_index else n
+            kind, data = ctrl(bridge, *GET_DESCRIPTOR, 0x2200, addr, want,
+                              deadline)
+            trunc_ok = (kind == "ok" and len(data) == min(want, decl)
+                        and bool(full[n]) and full[n].startswith(data))
+            kind_p, data_p = ctrl(bridge, *GET_PROTOCOL, 0x0000, addr, 1,
+                                  deadline)
+            if f["sub"] == 1:
+                proto_ok = (kind_p == "ok" and len(data_p) == 1)
+            else:
+                proto_ok = (kind_p != "ok" and len(data_p) == 0)
+            if trunc_ok and proto_ok:
+                pi["rounds_passed"] += 1
+            pi.setdefault("last", {}).update(
+                {"wLength": want, "addressed": addr, "got": len(data),
+                 "expected": min(want, decl), "truncation_ok": trunc_ok,
+                 "protocol_reply": kind_p, "protocol_ok": proto_ok})
+    out["rounds"] = rounds
+
+    # -- the verdict, per interface then strict over the whole inventory ----
+    for n_str, pi in out["per_interface"].items():
+        pi["passes_m4"] = bool(
+            pi["rounds"] >= MIN_PARITY_ROUNDS
+            and pi["rounds_passed"] == pi["rounds"]        # Rule 2: N of N
+            and pi["full_len_matches_declaration"]
+            and (pi["matches_pre_boot_prediction"]
+                 or not pi["prediction_available"]))
+    out["passed"] = sorted(int(k) for k, v in out["per_interface"].items()
+                           if v["passes_m4"])
+    out["parity"] = "%d/%d" % (len(out["passed"]), declared)
+
+    # -- the SECOND, stricter fraction, printed so 3/3 cannot be misread ----
+    # Registered in PREDICTIONS.md before this ran: the shipped keymap is 48
+    # KC_TRANSPARENT entries, so interfaces 0 and 1 have nothing to transmit on
+    # their interrupt pipes -- on real hardware either.  §0 defines M4 as a
+    # request answered by the firmware's own bytes, so an unsolicited IN report
+    # is not the criterion; this fraction is reported anyway so a reader
+    # applying a stricter rule can re-derive their own number.
+    try:
+        reply = bridge.cmd("REPORTS", deadline)
+        seen = {int(x.split(":")[0]) for x in reply.split()[1:]
+                if ":" in x} if " " in reply else set()
+    except Refused:
+        seen = None
+    if seen is None:
+        out["endpoint_parity"] = "unmeasured"
+    else:
+        with_traffic = sorted(f["num"] for f in ifaces
+                              if any((e & 0x0F) in seen for e in f["eps"]))
+        out["endpoint_traffic_interfaces"] = with_traffic
+        out["endpoint_parity"] = "%d/%d" % (len(with_traffic), declared)
+
+    stage("parity" + (" [WRONG-INDEX KNOB]" if wrong_index else ""),
+          parity=out["parity"], rounds=rounds,
+          endpoint_parity=out["endpoint_parity"],
+          detail="; ".join(
+              "iface %s: %d/%d rounds, %d B declared / %d B read, "
+              "GET_PROTOCOL %s -> %s"
+              % (k, v["rounds_passed"], v["rounds"],
+                 v["declared_report_len"], v["full_read_len"],
+                 "must be honoured" if v["subclass"] == 1
+                 else "must be refused",
+                 "PASS" if v["passes_m4"] else "FAIL")
+              for k, v in sorted(out["per_interface"].items())))
     return out
 
 
