@@ -107,6 +107,33 @@ HEARTBEAT = int(os.environ.get("HAL_PLANCK_HEARTBEAT", "400000"))
 #: process (playbook traps 183 / 187).
 NO_USB_IRQ = os.environ.get("HAL_PLANCK_NO_USB_IRQ") == "1"
 
+#: ⭐ THE FALSIFICATION KNOB THIS ROW DID NOT SHIP (playbook w112.4: a denial
+#: nobody can make fire is a comment; w119.4 named this row as exposed and
+#: could not run it, precisely because there was no arm).
+#:
+#: `HAL_PLANCK_STALL_AFTER_BIND=<n>` lets the guest run normally until the
+#: host bridge has bound AND `n` further idle-`wfi` visits have happened, then
+#: parks the CPU on a `b .` that ALREADY EXISTS in this image -- so nothing is
+#: patched and no byte of the firmware changes. Everything host-side stays
+#: alive: the bridge is listening, the greeting still carries our pid and our
+#: nonce, `HOST-BRIDGE-BOUND` is already in the log. ⚠ That is the whole point:
+#: it is the ONLY arm that can tell "the guest is executing" apart from "our
+#: own harness is up", and `n >= 1` makes the guest HALF-alive rather than dead
+#: (w119.3's `[2, 0]`), which is what separates a `> 0` witness from a growing
+#: one.
+#:
+#: It is inert unless set, it PRINTS when it arms and when it fires (w73/w75:
+#: an env-only arm appears in no log line), and it is never used on a graded
+#: run.
+STALL_AFTER_BIND = os.environ.get("HAL_PLANCK_STALL_AFTER_BIND")
+
+#: A ChibiOS halt self-loop already present in this image -- one of the six
+#: `halt_probe` sites in `configs/planck_addrs.yaml`, i.e. an address this
+#: package already documents as `b .`. Parking the PC here patches nothing,
+#: and `bp_handlers/halt_probe.HaltProbe` logs the landing, so the control
+#: announces itself in the child's own log.
+EXISTING_SPIN = 0x080070EC
+
 #: The live backend, stashed by the bp_handler -- a peripheral model is never
 #: handed one (playbook trap 95).
 _BACKEND = None
@@ -265,11 +292,44 @@ class IrqPump(BPHandler):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__()
         self.visits = 0
+        self.visits_since_bind = 0
+        self.stalled = False
 
     def register_handler(self, qemu, addr, func_name, **kwargs):  # noqa: ANN001
         global _BACKEND
         _BACKEND = qemu
+        if STALL_AFTER_BIND is not None:
+            log.warning("IrqPump: HAL_PLANCK_STALL_AFTER_BIND=%s -- ARMED. "
+                        "This run is a CONTROL: the guest will be parked on "
+                        "the existing `b .` at 0x%08x %s idle-`wfi` visits "
+                        "after the host bridge binds. It must never be read "
+                        "as a graded run.",
+                        STALL_AFTER_BIND, EXISTING_SPIN, STALL_AFTER_BIND)
         return super().register_handler(qemu, addr, func_name, **kwargs)
+
+    def _maybe_stall(self, qemu) -> bool:  # noqa: ANN001
+        """Park the guest, once, if the control is armed and its point reached.
+
+        Returns True if the CPU was parked on this call. Runs on the DISPATCH
+        thread (it is called from a breakpoint handler) and touches nothing
+        but this object's own two counters and the PC.
+        """
+        if STALL_AFTER_BIND is None or self.stalled:
+            return False
+        from ..peripheral_models import usb_host as host_mod
+        if not getattr(host_mod.get_host(), "bound", False):
+            return False
+        self.visits_since_bind += 1
+        if self.visits_since_bind <= int(STALL_AFTER_BIND, 0):
+            return False
+        self.stalled = True
+        qemu.write_register("pc", EXISTING_SPIN)
+        log.warning("IrqPump: HAL_PLANCK_STALL_AFTER_BIND -- FIRED after %d "
+                    "idle-`wfi` visits (%d of them after the bridge bound). "
+                    "The CPU is now parked on the `b .` at 0x%08x; the bridge, "
+                    "the greeting and every host model stay alive.",
+                    self.visits, self.visits_since_bind - 1, EXISTING_SPIN)
+        return True
 
     @bp_handler(["irq_pump"])
     def pump(self, qemu, bp_addr) -> Tuple[bool, Optional[int]]:  # noqa: ANN001
@@ -281,5 +341,7 @@ class IrqPump(BPHandler):
                      bp_addr, MMIO_PER_BEAT,
                      "  [HAL_PLANCK_NO_USB_IRQ=1: the USB line is WITHHELD]"
                      if NO_USB_IRQ else "")
+        if self._maybe_stall(qemu):
+            return False, None
         service(qemu, from_bp=True)
         return False, None
