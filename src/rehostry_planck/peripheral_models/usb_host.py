@@ -124,6 +124,12 @@ class UsbHost:
     def __init__(self) -> None:
         self.state = "reset"
         self.pending_irq = False
+        #: True once `start_bridge` has actually got the socket and called
+        #: `listen`. PUBLISH-ONLY: nothing grades it. `bp_handlers/irq_pump`
+        #: reads it so the `HAL_PLANCK_STALL_AFTER_BIND` control can park the
+        #: guest at a point where the harness is fully alive -- which is the
+        #: only arm that can tell a rung apart from a liveness check.
+        self.bound = False
         self.configured = False
         self.enumerated = False
         self.vid_pid: Optional[Tuple[int, int]] = None
@@ -469,6 +475,7 @@ class UsbHost:
                       "will be injectable into this run", port, exc)
             return
         srv.listen(4)
+        self.bound = True
         log.info("UsbHost: HOST-BRIDGE-BOUND tcp/%d pid=%d", port, self.pid)
 
         def accept_loop():

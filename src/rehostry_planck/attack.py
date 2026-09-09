@@ -125,6 +125,17 @@ if AUDIT_SKIP - _ALLOWED_SKIPS:
 BOOT_TIMEOUT = float(os.environ.get("HAL_PLANCK_BOOT_TIMEOUT", "240"))
 ENUM_TIMEOUT = float(os.environ.get("HAL_PLANCK_ENUM_TIMEOUT", "180"))
 
+#: How long layer 3 (below) will wait for the guest's own counter to ADVANCE.
+#: Measured, not guessed: on this row, sampled every 50 ms for 20 s, the
+#: largest interval in which `matrix.col_reads` did not move on a healthy boot
+#: is **0.000 s** (`scratch-batch-s0907/laneEXP2/recon/planck-healthy.tsv`), so
+#: 20 s is an enormous margin.
+GUEST_PROGRESS_TIMEOUT = float(
+    os.environ.get("HAL_PLANCK_GUEST_PROGRESS_TIMEOUT", "20"))
+#: Minimum separation between the two samples. Two reads in the same
+#: millisecond would make `n2 > n1` a coin toss rather than a measurement.
+GUEST_PROGRESS_GAP = 0.25
+
 
 class Refused(RuntimeError):
     """The run cannot be graded -- abort, do not downgrade to a boolean."""
@@ -483,6 +494,15 @@ def run_attack(on_stage: Optional[Callable] = None,
                   detail="the child logged HOST-BRIDGE-BOUND tcp/%d pid=%d "
                          "and no bind failure" % (port, proc.pid))
 
+        # layer 3: is the GUEST executing? Layers 0-2 above are all satisfied
+        # by our own side of the wire; see `guest_is_executing`'s docstring for
+        # the arm that proves it.
+        gx = guest_is_executing(bridge, stage)
+        res["guest_col_reads"] = gx["samples"]
+        res["guest_executing"] = gx["ok"]
+        if not gx["ok"]:
+            raise Refused(gx["why"])
+
         res["booted"] = True
 
         # -- enumeration ---------------------------------------------------
@@ -733,6 +753,85 @@ def run_attack(on_stage: Optional[Callable] = None,
             except (ValueError, OSError):
                 pass
         res["log"] = log_path
+
+
+def _guest_col_reads(reply: str):
+    """The guest's own GPIO column-read count, out of a `MATRIX` reply.
+
+    Returns an int, or None if the reply does not carry one (the model has not
+    been constructed yet, or the bridge answered something else).
+    """
+    m = re.search(r"\bcol_reads=(\d+)\b", reply)
+    return int(m.group(1)) if m else None
+
+
+def guest_is_executing(bridge, stage) -> dict:
+    """Layer 3: is the GUEST executing, or is only OUR OWN harness alive?
+
+    ⭐ WHY THIS LAYER EXISTS. Layers 0-2 are a bind probe, a TCP connect, a
+    greeting carrying our child's pid and our per-run nonce, and a marker in
+    our child's log. Every one of them RAISES on failure, and w119.4 correctly
+    called that the strongest form of enforcement there is -- and then drew the
+    wrong conclusion from it. **A raise is ENFORCEMENT; the question this layer
+    answers is PROVENANCE, and they are independent.** Measured on this row
+    with `HAL_PLANCK_STALL_AFTER_BIND=20`, all four layers passed and the run
+    recorded `booted: true, milestone: M1` for a CPU parked on a `b .`.
+
+    The witness is `GpioMatrix.col_reads`: the number of times the FIRMWARE
+    executed a load against a GPIO input register. It has exactly ONE writer
+    (`peripheral_models/gpio_matrix.GpioMatrix.hw_read`), which is an MMIO
+    callback and therefore runs on the emulator's DISPATCH thread, and it
+    already travelled over this row's own `MATRIX` bridge command, where
+    nothing ever read it (playbook w117.2, for the sixth time in five lanes).
+    ⚠ It is deliberately NOT a `read_memory` / `read_register` and this
+    function names no emulator handle; `tests/test_boot_rung.py` asserts both
+    with `ast`.
+
+    ⚠ IT MUST **ADVANCE**, not merely be non-zero (w112.5, w119.3). On this row
+    `HAL_PLANCK_STALL_AFTER_BIND=300` produces `col_reads = 218` and then
+    nothing, ever -- a guest that executed a little and then stopped. A witness
+    graded `> 0` passes that arm; this one refuses it.
+
+    Fewer than two samples is a DENIAL, never a pass (RULES §2's deaf-console
+    guard).
+    """
+    deadline = time.time() + GUEST_PROGRESS_TIMEOUT
+    samples: list = []
+    first_t = None
+    while time.time() < deadline:
+        n = _guest_col_reads(bridge.cmd("MATRIX", deadline))
+        if n is None:
+            time.sleep(0.05)
+            continue
+        if not samples:
+            if n > 0:
+                samples.append(n)
+                first_t = time.time()
+            time.sleep(0.05)
+            continue
+        if time.time() - first_t >= GUEST_PROGRESS_GAP:
+            if n > samples[0]:
+                samples.append(n)
+                break
+            samples = samples[:1]
+        time.sleep(0.05)
+    ok = len(samples) == 2 and samples[0] > 0 and samples[1] > samples[0]
+    out = {"ok": ok, "samples": samples}
+    if ok:
+        out["why"] = ("the firmware executed %d further GPIO input reads of "
+                      "its own between two samples %.2f s apart (%d -> %d)"
+                      % (samples[1] - samples[0], GUEST_PROGRESS_GAP,
+                         samples[0], samples[1]))
+    elif not samples:
+        out["why"] = ("the guest never executed: no GPIO input read by the "
+                      "firmware within %.0f s of the bridge answering"
+                      % GUEST_PROGRESS_TIMEOUT)
+    else:
+        out["why"] = ("the guest STOPPED: %d GPIO input reads and then no "
+                      "further one for %.0f s -- a non-zero counter is not an "
+                      "advancing one" % (samples[0], GUEST_PROGRESS_TIMEOUT))
+    stage("guest-executing", ok=ok, col_reads=samples, detail=out["why"])
+    return out
 
 
 def _check_bind_marker(log_path: str, pid: int, port: int) -> None:

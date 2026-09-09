@@ -455,3 +455,79 @@ python3 tools/extract_firmware.py     # hard-fails if anything has drifted
 python3 -m pytest tests/ -q           # 30 tests, no emulator
 python3 -m rehostry_planck.attack     # self-booting; one RESULT: line
 ```
+
+## 2026-09-08 (lane `s0907-laneEXP2`) — M1 IS NOW A GUEST-EXECUTION RUNG, AND THE ARM THAT PROVES IT DID NOT EXIST
+
+**No milestone moved. The census header is untouched.** The positive path is
+still `M8 landed:true`, live, before and after.
+
+### The defect, measured rather than argued
+
+w119.4 named this row as exposed and could not run it: *"every one of the four
+preconditions is HOST-provenance… it ships no stall knob, so I did not run it
+and did not repair it."* That reading was right and this lane built the arm.
+
+`HAL_PLANCK_STALL_AFTER_BIND=<n>` lets the guest run until the host bridge has
+bound and `n` further idle-`wfi` visits have happened, then parks the CPU on the
+`b .` at **0x080070EC** — an address `configs/planck_addrs.yaml` already
+registers as a `halt_probe` site, so **no byte of the firmware is modified**.
+Everything host-side stays alive. It is inert unless set and it prints when it
+arms and when it fires; `HaltProbe` logs the landing independently.
+
+Live, on the committed rung:
+
+```
+  HAL_PLANCK_STALL_AFTER_BIND=20    booted: true   milestone: M1   <- parked on `b .`
+  HAL_PLANCK_STALL_AFTER_BIND=300   booted: true   milestone: M3   <- parked on `b .`
+```
+
+⭐ **M3 as well as M1**: at n=300 the guest had already finished enumeration, so
+`descriptor_match` was true and stayed recorded after the CPU stopped.
+
+### The margin, measured FIRST (playbook w84.3)
+
+Sampled every 50 ms through this row's own `MATRIX` bridge command, which has
+always carried the counter and which `attack.py` never called:
+
+| | healthy | `=20` | `=300` | `--control no-usb-irq` |
+|---|---:|---:|---:|---:|
+| our bridge answered at | 0.242 s | 0.226 s | 0.226 s | 0.242 s |
+| first guest `col_reads` | 0.298 s | **never** | 0.287 s | 0.241 s |
+| `matrix.col_reads` at exit | 2,702,096 | **0** | **218, frozen** | 2,047,620 |
+| largest no-move gap | **0.000 s** | — | — | 0.000 s |
+
+⭐ `=300` reproduces **byte-identically** across two separate boots (`218`
+both times): the counter is guest-instruction-driven, not wall-clock.
+
+### The rung
+
+`res["booted"] = True` now sits behind `guest_is_executing()`, which requires
+`GpioMatrix.col_reads` — the count of GPIO input reads the FIRMWARE executed,
+one writer, in an MMIO callback, i.e. on the dispatch thread — to satisfy
+`n1 > 0 and n2 > n1` across two samples at least 0.25 s apart, with fewer than
+two samples a denial. ⚠ It reads a plain integer over the bridge's `MATRIX`
+line; it is deliberately not a `read_memory`/`read_register`, and
+`tests/test_boot_rung.py` asserts that with `ast` (with the docstring node
+dropped — the prose names the banned words in order to disclaim them).
+
+⚠ **A `> 0` witness would have passed the `=300` arm.** Requiring growth is what
+refuses it.
+
+### Arms, before and after
+
+| arm | before | after |
+|---|---|---|
+| positive | `M8 landed:true` | **unchanged**, `col_reads [34122, 74346]` |
+| `--control no-usb-irq` | `M1 booted:true` | **unchanged** — the matrix keeps scanning, so the new term is **not** a false floor on the arm this file documents as deliberately still M1 |
+| `HAL_PY=/usr/bin/false` | `M0 booted:false` | **unchanged** |
+| ⚠ `STALL_AFTER_BIND=20` | `M1 booted:true` | **`M0 booted:false`**, `[]` |
+| ⚠ `STALL_AFTER_BIND=300` | `M3 booted:true` | **`M0 booted:false`**, `[218]` |
+
+⚠ **`landed` moves on nothing.** Tests **42 → 60**, **9 of 9** deliberate
+size-changing breaks caught with the test count unchanged on every one.
+
+### Ordering, recorded and NOT changed (w84.4 / w120.8)
+
+Unlike `ble-ancs`, `atreus` and the Lantronix family, this row already records
+`booted` **after** its pid+nonce identity challenge and after the bind-marker
+check. The new layer goes after both. Nothing about the ordering changed.
