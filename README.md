@@ -1,5 +1,7 @@
 # device-planck-rev6-stm32f303
 
+**Status: M8** (census-verified 2026-09-05) — see [STATUS.md](STATUS.md) for the graded evidence and for which rungs are refused or undefined. The machine-readable record is the census header on line 1 of that file.
+
 A rehosted **OLKB / Drop Planck rev6** — a 48-key, 40 % ortholinear keyboard on
 an **STM32F303CCT6** ("Proton-C"-class, Cortex-M4F) running **QMK on ChibiOS** —
 as a standalone, pip-installable HALucinator device.
