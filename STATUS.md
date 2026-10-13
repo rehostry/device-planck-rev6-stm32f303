@@ -101,17 +101,18 @@ system tick) read **IPSR 45, depth 1** in every sample, and the IPSR-91 rule rej
     the request undelivered. **Mute** (arm `no-gate`): 5 of 5 live.
   * Distinct `A`: 45 and 48 of 59.
 * **Repeat.** `final2` reproduced every verdict, credit, own/shared label set and reply sha256 of `final`
+  (`summary-final2.jsonl`, last line; its per-input results file is a repeat and is not committed)
   (`repeat_diffs` empty).
 * **Harness.** One child process per input, its own emulator process group, forced `os._exit`, 2 at a time on
   slots 0–1. Slot `k` uses ports `39970+3k..+2` (bridge, zmq rx, zmq tx), asserted inside `39970..39989`. This repo
-  at `51fdd24`, committed before every arm. PIDs in `child-pids-*.txt`. A boot takes about 3 s.
+  at `51fdd24`, committed before every arm. PIDs in `child-pids-*.txt` (not committed for the repeat arm `final2`). A boot takes about 3 s.
 * **Venv and core.** `.venv-dev` (py3.12.12, unicorn 2.1.4), as this STATUS names. Its interpreter resolves the
   shared `halucinator/src` at `b8ddb313` (branch `feat/falcon-ghidra-backend`, no tracked changes) at the start
   and end of every arm. `unicorn_backend.py` sha256 `18abc4d7…c2d3cd` at the start and end of every arm and in
   every boot. No fetch.
 * **Load.** 8.9 → 17.5 (other lanes running). No verdict depends on timing.
 
-### Controls (`evidence-s1011-laneAQ/summary-final.json`, `summary-final2.json`)
+### Controls (`evidence-s1011-laneAQ/summary-final.jsonl`, `summary-final2.jsonl`)
 
 * **0 hook records during boot** in all 118 graded boots.
 * **Next-entry identity:** each entry's hits scored against the **next** entry's identity: **0** true under
@@ -175,9 +176,12 @@ r["handler_hit"], r["credited"], r["live_after"], r["entry_resp"], r["own_fired"
   post-enumeration state sends `SET_ADDRESS`/`SET_CONFIGURATION` itself, or uses `no_enum=False`.
 * **Ports** come from `FUZZ_REACH_PORT_LOW`/`_HIGH` (defaults `39970..39989`), asserted inside `39950..40049`.
 
-Evidence in `evidence-s1011-laneAQ/`: `results-{final,final2,mute-enum,gate-wrong,no-gate}.json` (per input: hook
+Evidence in `evidence-s1011-laneAQ/`, compact JSON, one record per line: `results-{final,mute-enum,gate-wrong,no-gate}.jsonl` (per input: hook
 records with SETUP bytes, `r1`, OUT bytes, IPSR, depth, guest address; gate record; replies as status/length/sha256;
-liveness; spin; image and backend hashes; pid), `summary-*.json`, `arm-*.txt`, `child-pids-*.txt`.
+liveness; spin; image and backend hashes; pid), `summary-*.jsonl` (first line the arm aggregate),
+`arm-*.txt`, `child-pids-*.txt`. Arm `final2` is a repeat of `final`: its summary (with `repeat_diffs`) and arm
+header are committed, its per-input results are repeat-not-committed. Arm `v1-host-followup` was superseded by the
+fix in `51fdd24` and is not committed.
 
 **Not measured:**
 * any request after enumeration;
@@ -268,8 +272,8 @@ an opt-in mode.
 
 | | |
 |---|---|
-| venv | `/Users/user/Development/rehostry/.venv-dev` — what this file has always documented |
-| core | `/Users/user/Development/rehostry/halucinator/src/halucinator` @ `158c31ab`, resolved at run time by importing it, not by the venv's name |
+| venv | `.venv-dev` (in the rehostry checkout) — what this file has always documented |
+| core | `halucinator/src` @ `158c31ab`, resolved at run time by importing it, not by the venv's name |
 | bridge port | tcp/22140 (`HAL_PLANCK_BRIDGE_PORT`), ZMQ 6140/6141 |
 | box load | `uptime` 1.3–1.6 across every arm; no arm was taken under load |
 | ⚠ do NOT use | `venvs.noindex/planck-rev6-stm32f303` — the convenient naming convention is the wrong one (w29.1) |
