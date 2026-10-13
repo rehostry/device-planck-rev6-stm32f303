@@ -1,5 +1,236 @@
-<!-- rehostry-census: milestone=M8 landed=true verdict=M4-OK verified=2026-09-05 method=live-run ladder=derived path=rehostry-planck-attack note=parity-3of3-on-the-default-path-no-flags;M5-still-UNDEFINED-one-bus-one-peer -->
+<!-- rehostry-census: milestone=M8 landed=true verdict=M4-OK verified=2026-09-05 method=live-run ladder=derived path=rehostry-planck-attack fuzz_reach=41of41 fuzz_live=41of41 note=parity-3of3-on-the-default-path-no-flags;M5-still-UNDEFINED-one-bus-one-peer -->
 # STATUS — device-planck-rev6-stm32f303
+
+## 2026-10-13 — lane s1011-laneAQ: fuzz reach by handler hook on the USB control endpoint, one fresh boot per entry
+
+**`fuzz_reach=41of41 fuzz_live=41of41`, every entry the first SETUP on the wire, with no recovery step.** This
+measures fuzz reachability, not M8 parity: `n=`, `milestone=` and every other header token are unchanged (the only
+change to line 1 is the two inserted tokens; checked by stripping them and comparing byte for byte, and by
+`census_score.score()` giving the same verdict before and after). The method is lane s1011-laneAC's
+(`device-atreus-stm32f103`), adapted to this image.
+
+Image `planck.bin` sha256 `cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b` (not committed).
+Every boot ran on its own copy of `configs/` (image included; QMK's EEPROM emulation lives in that flash copy).
+The original and every copy hashed identical before and after every boot of all five arms (144 boots). Replies are
+stored as status, length and sha256 only.
+
+### The denominator, and where it comes from
+
+The census (`interfaces-ALL.tsv`) lists three entries for this row, `iface0`, `iface1`, `iface2`: the three HID
+interfaces the guest's CONFIGURATION descriptor declares (`INVENTORY.md`). Each is expanded into the control
+requests addressed to that interface which this image's own dispatch parses:
+
+* **21 per-interface inputs (`E_IFk_*`).** For each interface: GET_DESCRIPTOR HID class and REPORT, GET_REPORT,
+  GET_IDLE, SET_IDLE and SET_PROTOCOL. Interface 0 adds GET_PROTOCOL and SET_REPORT(Output) (the 1-byte LED report);
+  interface 1 adds SET_REPORT(Output) with Report ID 6 (the NKRO LED report).
+  * QMK's hook takes GET_PROTOCOL only on interface 0 and SET_REPORT only on interfaces 0 and 1; GET_PROTOCOL on
+    interface 1 and SET_REPORT on interface 2 fall through to ChibiOS' stall and are controls here.
+  * SET_PROTOCOL on interfaces 1 and 2 has its **own arm** (`0x0800718c`), which acknowledges without acting.
+* **20 extras (`X_*`)**, requests addressed to the device or an endpoint, which the census entries do not name:
+  GET_DESCRIPTOR DEVICE, CONFIGURATION and STRING 0–3, and every arm of ChibiOS' standard-request switch
+  (GET_STATUS ×4, CLEAR_FEATURE ×3, SET_FEATURE ×3, SET_ADDRESS, GET/SET_CONFIGURATION, SYNCH_FRAME).
+* **6 device outputs: not-a-target.** The INPUT reports the device emits on EP `0x81`/`0x82`/`0x83`.
+* **No raw-HID/VIA command set exists in this image.** The CONFIGURATION descriptor declares three interrupt IN
+  endpoints and no OUT endpoint, and no report descriptor uses usage page `0xFF60`. Interface 1's 182-byte
+  descriptor is QMK's shared endpoint (Report IDs 2 mouse, 3 system, 4 consumer, 6 NKRO); interface 2 is the
+  console (`0xFF31`, IN-only). So EP0 is the only host input. Census correction: the census' `iface1` note
+  ("182B report") does not indicate VIA.
+* **QMK's decline loop calls nothing on this build.** When the HID hook declines, it walks three per-driver
+  request-hook slots (`0x20000f04 + 0x84 + 0x90k`) before ChibiOS' switch. The probe read all three as `0` at the
+  first request of every boot, so no CDC/driver request set is dispatched.
+
+### The handlers, from the image's own dispatch
+
+The image is stripped. `tools/fuzz_reach_targets.py` **locates** QMK's `requests_hook_cb` `0x080070f8`,
+`get_usb_descriptor` `0x0800761c`, its caller `get_descriptor_cb` `0x08007210` (in ChibiOS' `USBConfig` at
+`0x0800e4d4`) and ChibiOS' `_usb_ep0setup` hook-load site `0x08008dd2`, by content. It then **executes** them in a
+bare unicorn instance on each request. The arm is the first instruction after the last conditional decision before
+the first effect (a call, a return, a store outside the stack, or a load from SRAM). Two chains go deeper:
+* SET_IDLE: the hook first calls a helper that stores the idle rate, then tail-calls a per-interface function. The
+  hook's arm `0x08007194` is a **route**; the own handler is the per-interface function's arm `0x08007c94`.
+* SET_REPORT: the hook's arm `0x0800716c` is a route. The OUT-stage callback it installs (`0x08007254`) runs on the
+  entry's OUT bytes; its 1-byte arm `0x08007276` and its Report-ID-1/6 arm `0x08007270` are the own handlers.
+
+`--check` re-derives the JSON, and every arm header shows `PASS`. The tool asserts that no entry's route passes
+through another entry's own handler, and that no control's static path reaches an own handler.
+
+⚠ **Shared labels.** 19 entries share a handler address: HID class, REPORT, GET_REPORT, GET_IDLE and SET_IDLE each
+reach one arm for all three interfaces; SET_PROTOCOL IF1/IF2 share `0x0800718c`; `X_GET_STATUS_IF` and
+`X_SYNCH_FRAME` share ChibiOS' "two zero bytes" arm `0x08008ee8`. They are credited only through identity at hit
+time, under the first-hit rule. Counting only entries with a handler address of their own, reach is **22 of 41**.
+`0x0800718c` is also the join point that `E_IF0_SET_PROTOCOL` executes **after** its own arm `0x08007184`; that
+record carries interface 0's SETUP and credits nothing.
+
+### Identity at hit time, and where the handler runs
+
+Entry `k` is credited only if the **first** `own` hook record after `k`'s SETUP is `k`'s handler and carries `k`'s
+identity, all read from guest state at hit time:
+* the 8 SETUP bytes in the guest's own `usbp->setup` (`usbp` from `r0` at `requests_hook_cb`'s first instruction)
+  equal `k`'s;
+* IPSR is **91**, the remapped `USB_LP` interrupt (IRQ 75);
+* for a `get_usb_descriptor` arm, `r1` is `k`'s `wIndex`;
+* for the OUT callback, the OUT bytes read through the guest's own `usbp->ep0next` are `k`'s.
+
+**Where it runs:** every own record in all five arms read **IPSR 91, depth 1**: ChibiOS serves EP0, including the
+OUT-stage callback, from the USB ISR. **The check can move:** a probe on `TIM3_IRQHandler+2` (`0x0800a192`, the
+system tick) read **IPSR 45, depth 1** in every sample, and the IPSR-91 rule rejects it.
+
+### How an entry is sent, settle, and liveness
+
+* **Entry first.** The row's host model runs its own enumeration as soon as the firmware opens EP0, and on a
+  CONFIGURATION reply it queues strings, report descriptors and SET_CONFIGURATION by itself. With
+  `FUZZ_REACH_NO_ENUM=1` (row-local, opt-in, emulator process only) the probe empties that script and drops those
+  follow-ups (each drop is logged). Only the bus reset precedes the input; the guest's own first SETUP was the
+  input in every graded boot that sent one (58 of 59 per arm; the 59th is `ctl-silence`).
+  * **Mute control (arm `mute-enum`, 16 boots):** with the script on, **848 hook records** (53 per boot) came
+    before the input. The graded arms recorded **0**.
+* **Bridge.** The row's `CTRL` verb blocks with a 20 s wall timeout. The probe adds a non-blocking `REQ`/`RESP`
+  verb (row-local, opt-in) that answers when the firmware finishes the transfer, with no wall timeout. The bridge
+  greets `HELLO pid=<our child> device=... nonce=<per-boot secret>`, and the hook log's `hello` carries the same
+  pid. This held in all 144 boots.
+* **Settle, in guest time.** The clock is guest milliseconds from the row's own system-timer model (TIM3 counts
+  advanced by the row's pump over the frequency the firmware programmed; ChibiOS runs tickless here, so tick
+  deliveries are not a clock). The input goes after 200 ms. Its phase ends at its `RESP` plus 200 ms, or after
+  2,000 ms. Wall-clock is only a ceiling and decided no verdict.
+* **Live after.** `SET_ADDRESS(A)` with `A` minted per boot, then `GET_DESCRIPTOR(DEVICE)`. The row's controller
+  model does not filter SETUPs by address, so the probe's opt-in `FUZZ_REACH_ADDR_GATE=A` delivers the second
+  request **only if the guest's own `DADDR` reads `A`**. Live iff the device answers 18 bytes, the guest-written
+  address is `A`, and the DEVICE handler fired with its identity.
+  * **Inverted control** (`DADDR == A^1`): 0 of 118 graded boots.
+  * **The gate bites** (arm `gate-wrong`, gate wants `A^1`): **0 of 5 live**; every boot shows the guest at `A` and
+    the request undelivered. **Mute** (arm `no-gate`): 5 of 5 live.
+  * Distinct `A`: 45 and 48 of 59.
+* **Repeat.** `final2` reproduced every verdict, credit, own/shared label set and reply sha256 of `final`
+  (`repeat_diffs` empty).
+* **Harness.** One child process per input, its own emulator process group, forced `os._exit`, 2 at a time on
+  slots 0–1. Slot `k` uses ports `39970+3k..+2` (bridge, zmq rx, zmq tx), asserted inside `39970..39989`. This repo
+  at `51fdd24`, committed before every arm. PIDs in `child-pids-*.txt`. A boot takes about 3 s.
+* **Venv and core.** `.venv-dev` (py3.12.12, unicorn 2.1.4), as this STATUS names. Its interpreter resolves the
+  shared `halucinator/src` at `b8ddb313` (branch `feat/falcon-ghidra-backend`, no tracked changes) at the start
+  and end of every arm. `unicorn_backend.py` sha256 `18abc4d7…c2d3cd` at the start and end of every arm and in
+  every boot. No fetch.
+* **Load.** 8.9 → 17.5 (other lanes running). No verdict depends on timing.
+
+### Controls (`evidence-s1011-laneAQ/summary-final.json`, `summary-final2.json`)
+
+* **0 hook records during boot** in all 118 graded boots.
+* **Next-entry identity:** each entry's hits scored against the **next** entry's identity: **0** true under
+  either the first-hit rule or any-hit. No entry credited a second entry.
+* **Undeclared input reaches no own handler** (identical in both arms; every one live after):
+
+| control | SETUP (+OUT) | what fired | credited | reply |
+|---|---|---|---|---|
+| `ctl-desc-type-0x99` | `80 06 0099 0000 1000` | `get_usb_descriptor` not-found `0x08007640`, ChibiOS stall `0x08008de2` | none | STALL |
+| `ctl-string-index-4` | `80 06 0403 0904 4000` | not-found, stall | none | STALL |
+| `ctl-hid-class-iface-9` | `81 06 0021 0900 0900` | not-found, stall | none | STALL |
+| `ctl-report-iface-9` | `81 06 0022 0900 4000` | not-found, stall | none | STALL |
+| `ctl-get-report-iface-9` | `a1 01 0001 0900 0800` | GET_REPORT's range refusal `0x08007a28`, stall | none | STALL |
+| `ctl-get-report-id-9` | `a1 01 0901 0000 0800` | `0x08007a28`, stall | none | STALL |
+| `ctl-get-idle-iface-9` | `a1 02 0000 0900 0100` | GET_IDLE's refusal `0x08007c70`, stall | none | STALL |
+| `ctl-set-idle-iface-9` | `21 0a 0000 0900 0000` | SET_IDLE's refusal `0x08007cc0`, stall | none | STALL |
+| `ctl-get-protocol-iface-1` | `a1 03 0000 0100 0100` | stall | none | STALL |
+| `ctl-set-report-iface-2` | `21 09 0002 0200 0100 + 02` | stall | none | STALL |
+| `ctl-set-report-id-5` | `21 09 0502 0100 0200 + 0502` | OUT callback's ignore arm `0x0800727a` | none | ACK, ignored |
+| `ctl-vendor-request` | `40 5a 0000 0000 0000` | stall | none | STALL |
+| `ctl-class-req-0x20-iface-0` (CDC SET_LINE_CODING) | `21 20 0000 0000 0700 + 00×7` | stall | none | STALL |
+| `ctl-get-interface` (no arm in this build) | `81 0a 0000 0000 0100` | stall | none | STALL |
+| `ctl-silence` | nothing | nothing | none | — |
+
+* **Malformed lengths, recorded and not investigated.** All three reach a declared entry's handler (expected: none
+  of these arms reads `wLength`), and none is credited (the SETUP bytes differ):
+  * `mal-device-wlength-0` (`80 06 0001 0000 0000`) reached `X_DEVICE`'s arm; `mal-get-idle-wlength-0`
+    (`a1 02 0000 0000 0000`) reached the GET_IDLE arm. **Neither transfer completed, and neither boot answered the
+    liveness requests**; the guest's PC stayed in QMK's main loop (`0x08002d1c`). Unexplained; recorded only.
+  * `mal-set-report-if0-wlength-0` (`21 09 0002 0000 0000`, no data stage) reached `E_IF0_SET_REPORT_OUT`'s OUT
+    callback arm `0x08007276` (ChibiOS runs the callback at the status stage); ACK; live after.
+
+### Not live, and unexplained
+
+* **Not live:** none of the 41, without any recovery step. With recipes: the same 41 (none is needed).
+* **Faults:** no `UC_ERR`, unmapped access, traceback or harness error in any of the 144 boots.
+* **Unexplained:** the two zero-length IN malformed controls above (controls, not entries).
+* Correct refusals that still prove reach: `X_GET_STATUS_EP_IN/OUT` reach their own arms (`0x08008f7c`/`0x08008f92`)
+  and STALL, on an unconfigured device.
+* No entry here jumps to the bootloader or writes EEPROM through USB: `QK_BOOT` and VIA need a raw-HID endpoint,
+  which this image does not declare.
+
+### The fuzzer entry point
+
+```python
+from rehostry_planck.fuzz_entry import reach_one
+r = reach_one(entry="E_IF1_GET_DESC_REPORT")                         # a declared entry, FIRST SETUP on the wire
+r = reach_one(setups=[(0xA1, 1, 0x0106, 1, 32), (0x21, 9, 0x0206, 1, 2, b"\x06\x02")])  # ARBITRARY SETUPs (+ OUT data)
+r = reach_one(entry="X_DEVICE", no_enum=False)                       # mute control: the host model enumerates first
+r["handler_hit"], r["credited"], r["live_after"], r["entry_resp"], r["own_fired"], r["shared_fired"], r["spin"]
+```
+
+```
+.venv-dev/bin/python -m rehostry_planck.fuzz_entry --entry E_IF0_GET_REPORT --out x.json --workdir W
+.venv-dev/bin/python -m rehostry_planck.fuzz_entry --setup a1:01:0106:0001:0020 21:09:0206:0001:0002:0602 --out x.json --workdir W
+.venv-dev/bin/python -m rehostry_planck.fuzz_entry --sweep --workers 2 --outdir DIR [--with-enum] [--no-addr-gate] [--gate-wrong]
+```
+
+* **Cost.** One fresh boot of about 3 s per call, in its own process group, on its own copy of `configs/`.
+* **Pre-enumeration.** Every entry runs on an unaddressed, unconfigured device. A fuzzer that wants
+  post-enumeration state sends `SET_ADDRESS`/`SET_CONFIGURATION` itself, or uses `no_enum=False`.
+* **Ports** come from `FUZZ_REACH_PORT_LOW`/`_HIGH` (defaults `39970..39989`), asserted inside `39950..40049`.
+
+Evidence in `evidence-s1011-laneAQ/`: `results-{final,final2,mute-enum,gate-wrong,no-gate}.json` (per input: hook
+records with SETUP bytes, `r1`, OUT bytes, IPSR, depth, guest address; gate record; replies as status/length/sha256;
+liveness; spin; image and backend hashes; pid), `summary-*.json`, `arm-*.txt`, `child-pids-*.txt`.
+
+**Not measured:**
+* any request after enumeration;
+* GET_REPORT/SET_REPORT per Report ID beyond one GET_REPORT per interface and the two OUT reports; which report
+  storage serves a GET_REPORT is decided past the own arm, from guest RAM (`iface_slot_lut` read `01 00 02`, all
+  three storage pointers non-zero);
+* `SET_FEATURE(TEST_MODE)`, SET_INTERFACE, and the interrupt IN endpoints as inputs (they carry no host data);
+* the matrix/keys (`PRESS`), which are not USB inputs.
+
+### Every input entry
+| entry | census | SETUP (+OUT) | own handler | shared with | reached (final/final2) | live | reply | spin PC |
+|---|---|---|---|---|---|---|---|---|
+| `E_IF0_GET_DESC_HID` | iface0 | `8106002100000900` | `0x800766e` (gud) | E_IF1_GET_DESC_HID, E_IF2_GET_DESC_HID | y/y | y/y | ok 9 B | `0x8002d1c` |
+| `E_IF0_GET_DESC_REPORT` | iface0 | `8106002200004400` | `0x800767c` (gud) | E_IF1_GET_DESC_REPORT, E_IF2_GET_DESC_REPORT | y/y | y/y | ok 68 B | `0x8002d1c` |
+| `E_IF0_GET_REPORT` | iface0 | `a101000100000800` | `0x80079f8` (hook) | E_IF1_GET_REPORT, E_IF2_GET_REPORT | y/y | y/y | ok 8 B | `0x8002d1c` |
+| `E_IF0_GET_IDLE` | iface0 | `a102000000000100` | `0x8007c44` (hook) | E_IF1_GET_IDLE, E_IF2_GET_IDLE | y/y | y/y | ok 1 B | `0x8002d1c` |
+| `E_IF0_SET_IDLE` | iface0 | `210a000000000000` | `0x8007c94` (hookcont) | E_IF1_SET_IDLE, E_IF2_SET_IDLE | y/y | y/y | ok 0 B | `0x8002d1c` |
+| `E_IF0_GET_PROTOCOL` | iface0 | `a103000000000100` | `0x8007134` (hook) | — | y/y | y/y | ok 1 B | `0x8002d1c` |
+| `E_IF0_SET_PROTOCOL` | iface0 | `210b010000000000` | `0x8007184` (hook) | — | y/y | y/y | ok 0 B | `0x8002d1c` |
+| `E_IF0_SET_REPORT_OUT` | iface0 | `2109000200000100 + 02` | `0x8007276` (cb) | — | y/y | y/y | ok 0 B | `0x8002d1c` |
+| `E_IF1_GET_DESC_HID` | iface1 | `8106002101000900` | `0x800766e` (gud) | E_IF0_GET_DESC_HID, E_IF2_GET_DESC_HID | y/y | y/y | ok 9 B | `0x8002d1c` |
+| `E_IF1_GET_DESC_REPORT` | iface1 | `810600220100b600` | `0x800767c` (gud) | E_IF0_GET_DESC_REPORT, E_IF2_GET_DESC_REPORT | y/y | y/y | ok 182 B | `0x8002d1c` |
+| `E_IF1_GET_REPORT` | iface1 | `a101060101002000` | `0x80079f8` (hook) | E_IF0_GET_REPORT, E_IF2_GET_REPORT | y/y | y/y | ok 32 B | `0x8002d1c` |
+| `E_IF1_GET_IDLE` | iface1 | `a102000001000100` | `0x8007c44` (hook) | E_IF0_GET_IDLE, E_IF2_GET_IDLE | y/y | y/y | ok 1 B | `0x8002d1c` |
+| `E_IF1_SET_IDLE` | iface1 | `210a000001000000` | `0x8007c94` (hookcont) | E_IF0_SET_IDLE, E_IF2_SET_IDLE | y/y | y/y | ok 0 B | `0x8002d1c` |
+| `E_IF1_SET_PROTOCOL` | iface1 | `210b010001000000` | `0x800718c` (hook) | E_IF2_SET_PROTOCOL | y/y | y/y | ok 0 B | `0x8002d1c` |
+| `E_IF1_SET_REPORT_OUT_ID6` | iface1 | `2109060201000200 + 0602` | `0x8007270` (cb) | — | y/y | y/y | ok 0 B | `0x8002d1c` |
+| `E_IF2_GET_DESC_HID` | iface2 | `8106002102000900` | `0x800766e` (gud) | E_IF0_GET_DESC_HID, E_IF1_GET_DESC_HID | y/y | y/y | ok 9 B | `0x8002d1c` |
+| `E_IF2_GET_DESC_REPORT` | iface2 | `8106002202001500` | `0x800767c` (gud) | E_IF0_GET_DESC_REPORT, E_IF1_GET_DESC_REPORT | y/y | y/y | ok 21 B | `0x8002d1c` |
+| `E_IF2_GET_REPORT` | iface2 | `a101000102002000` | `0x80079f8` (hook) | E_IF0_GET_REPORT, E_IF1_GET_REPORT | y/y | y/y | ok 32 B | `0x8002d1c` |
+| `E_IF2_GET_IDLE` | iface2 | `a102000002000100` | `0x8007c44` (hook) | E_IF0_GET_IDLE, E_IF1_GET_IDLE | y/y | y/y | ok 1 B | `0x8002d1c` |
+| `E_IF2_SET_IDLE` | iface2 | `210a000002000000` | `0x8007c94` (hookcont) | E_IF0_SET_IDLE, E_IF1_SET_IDLE | y/y | y/y | ok 0 B | `0x8002d1c` |
+| `E_IF2_SET_PROTOCOL` | iface2 | `210b010002000000` | `0x800718c` (hook) | E_IF1_SET_PROTOCOL | y/y | y/y | ok 0 B | `0x8002d1c` |
+| `X_DEVICE` | extra | `8006000100001200` | `0x8007688` (gud) | — | y/y | y/y | ok 18 B | `0x8002d1c` |
+| `X_CONFIG` | extra | `8006000200005400` | `0x8007630` (gud) | — | y/y | y/y | ok 84 B | `0x8002d1c` |
+| `X_STRING_0` | extra | `8006000300000400` | `0x800768e` (gud) | — | y/y | y/y | ok 4 B | `0x8002d1c` |
+| `X_STRING_1` | extra | `800601030904ff00` | `0x8007654` (gud) | — | y/y | y/y | ok 10 B | `0x8002d1c` |
+| `X_STRING_2` | extra | `800602030904ff00` | `0x800765a` (gud) | — | y/y | y/y | ok 14 B | `0x8002d1c` |
+| `X_STRING_3` | extra | `800603030904ff00` | `0x8007660` (gud) | — | y/y | y/y | ok 66 B | `0x8002d1c` |
+| `X_GET_STATUS_DEV` | extra | `8000000000000200` | `0x8008e6a` (std) | — | y/y | y/y | ok 2 B | `0x8002d1c` |
+| `X_GET_STATUS_IF` | extra | `8100000000000200` | `0x8008ee8` (std) | X_SYNCH_FRAME | y/y | y/y | ok 2 B | `0x8002d1c` |
+| `X_GET_STATUS_EP_IN` | extra | `8200000081000200` | `0x8008f7c` (std) | — | y/y | y/y | stall 0 B | `0x8002d1c` |
+| `X_GET_STATUS_EP_OUT` | extra | `8200000001000200` | `0x8008f92` (std) | — | y/y | y/y | stall 0 B | `0x8002d1c` |
+| `X_CLEAR_FEATURE_DEV_RW` | extra | `0001010000000000` | `0x8008efe` (std) | — | y/y | y/y | ok 0 B | `0x8002d1c` |
+| `X_SET_FEATURE_DEV_RW` | extra | `0003010000000000` | `0x8008e8e` (std) | — | y/y | y/y | ok 0 B | `0x8002d1c` |
+| `X_CLEAR_FEATURE_EP_IN` | extra | `0201000081000000` | `0x8008fb2` (std) | — | y/y | y/y | ok 0 B | `0x8002d1c` |
+| `X_CLEAR_FEATURE_EP_OUT` | extra | `0201000001000000` | `0x8008fb8` (std) | — | y/y | y/y | ok 0 B | `0x8002d1c` |
+| `X_SET_FEATURE_EP_IN` | extra | `0203000081000000` | `0x8008fd8` (std) | — | y/y | y/y | ok 0 B | `0x8002d1c` |
+| `X_SET_FEATURE_EP_OUT` | extra | `0203000001000000` | `0x8008fde` (std) | — | y/y | y/y | ok 0 B | `0x8002d1c` |
+| `X_SET_ADDRESS` | extra | `00052a0000000000` | `0x8008f12` (std) | — | y/y | y/y | ok 0 B | `0x8002d1c` |
+| `X_GET_CONFIGURATION` | extra | `8008000000000100` | `0x8008f1a` (std) | — | y/y | y/y | ok 1 B | `0x8002d1c` |
+| `X_SET_CONFIGURATION` | extra | `0009010000000000` | `0x8008f52` (std) | — | y/y | y/y | ok 0 B | `0x8002d1c` |
+| `X_SYNCH_FRAME` | extra | `820c000081000200` | `0x8008ee8` (std) | X_GET_STATUS_IF | y/y | y/y | ok 2 B | `0x8002d1c` |
 
 **Milestone reached: M8.** Interface parity is **3 / 3** — every interface the
 firmware's own CONFIGURATION descriptor declares completes a round trip in the

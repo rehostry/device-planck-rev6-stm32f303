@@ -1,0 +1,851 @@
+{
+ "arm": "arm-mute-enum",
+ "agg": {
+  "entries": 13,
+  "reached": 13,
+  "live": 13,
+  "boot_hits_total": 848,
+  "boot_hit_boots": 16,
+  "faults": 0,
+  "errors": [],
+  "next_identity_true": 0,
+  "credited_other": 7,
+  "inverted_ctl_true": 0,
+  "hook_log_pid_ok": 16,
+  "hello_ok": 16,
+  "bins_unchanged": true,
+  "backend_sha": [
+   "18abc4d7176bef732dc310ce1a9f80e03a316a513b12a14bef6cd6eed4c2d3cd"
+  ],
+  "distinct_live_addr": 16,
+  "own_ipsr_depth": [
+   [
+    91,
+    1
+   ]
+  ],
+  "isr_ipsr_depth": [
+   [
+    45,
+    1
+   ]
+  ],
+  "boots": 16,
+  "first_setup_is_input": 1,
+  "load_min_max": [
+   15.84,
+   16.62
+  ]
+ },
+ "entries": [
+  {
+   "id": "E_IF0_GET_DESC_HID",
+   "hit": true,
+   "live": true,
+   "resp": {
+    "status": "ok",
+    "len": 9,
+    "sha256": "9329c92e0081d1c748d7e646b41a50a4f9f0b1e98d2d74f4f063f0e01a431e63"
+   },
+   "credited": [
+    "E_IF0_GET_DESC_HID"
+   ],
+   "own": [
+    "E_IF0_GET_DESC_HID+E_IF1_GET_DESC_HID+E_IF2_GET_DESC_HID"
+   ],
+   "shared": [],
+   "route": [
+    "get_usb_descriptor",
+    "requests_hook_cb",
+    "route-hook-0x80071b6"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 125,
+   "live_daddr": 125,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 125,
+     "want": 125,
+     "delivered": true,
+     "t": 1791891692.42,
+     "ticks": 2550
+    }
+   ],
+   "faults": 0,
+   "wall_s": 2.7,
+   "first_setup": [
+    "8006000100001200"
+   ],
+   "err": null
+  },
+  {
+   "id": "E_IF0_GET_REPORT",
+   "hit": true,
+   "live": true,
+   "resp": {
+    "status": "ok",
+    "len": 8,
+    "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+   },
+   "credited": [
+    "E_IF0_GET_REPORT"
+   ],
+   "own": [
+    "E_IF0_GET_REPORT+E_IF1_GET_REPORT+E_IF2_GET_REPORT"
+   ],
+   "shared": [],
+   "route": [
+    "requests_hook_cb"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 84,
+   "live_daddr": 84,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 84,
+     "want": 84,
+     "delivered": true,
+     "t": 1791891692.423,
+     "ticks": 2604
+    }
+   ],
+   "faults": 0,
+   "wall_s": 2.7,
+   "first_setup": [
+    "8006000100001200"
+   ],
+   "err": null
+  },
+  {
+   "id": "E_IF0_SET_IDLE",
+   "hit": true,
+   "live": true,
+   "resp": {
+    "status": "ok",
+    "len": 0,
+    "sha256": null
+   },
+   "credited": [
+    "E_IF0_SET_IDLE"
+   ],
+   "own": [
+    "E_IF0_SET_IDLE+E_IF1_SET_IDLE+E_IF2_SET_IDLE"
+   ],
+   "shared": [],
+   "route": [
+    "requests_hook_cb",
+    "route-hook-0x8007194"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 63,
+   "live_daddr": 63,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 63,
+     "want": 63,
+     "delivered": true,
+     "t": 1791891695.175,
+     "ticks": 2656
+    }
+   ],
+   "faults": 0,
+   "wall_s": 2.7,
+   "first_setup": [
+    "8006000100001200"
+   ],
+   "err": null
+  },
+  {
+   "id": "E_IF0_SET_PROTOCOL",
+   "hit": true,
+   "live": true,
+   "resp": {
+    "status": "ok",
+    "len": 0,
+    "sha256": null
+   },
+   "credited": [
+    "E_IF0_SET_PROTOCOL"
+   ],
+   "own": [
+    "E_IF0_SET_PROTOCOL",
+    "E_IF1_SET_PROTOCOL+E_IF2_SET_PROTOCOL"
+   ],
+   "shared": [],
+   "route": [
+    "requests_hook_cb"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 16,
+   "live_daddr": 16,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 16,
+     "want": 16,
+     "delivered": true,
+     "t": 1791891695.176,
+     "ticks": 2656
+    }
+   ],
+   "faults": 0,
+   "wall_s": 2.7,
+   "first_setup": [
+    "8006000100001200"
+   ],
+   "err": null
+  },
+  {
+   "id": "E_IF0_SET_REPORT_OUT",
+   "hit": true,
+   "live": true,
+   "resp": {
+    "status": "ok",
+    "len": 0,
+    "sha256": null
+   },
+   "credited": [
+    "E_IF0_SET_REPORT_OUT"
+   ],
+   "own": [
+    "E_IF0_SET_REPORT_OUT"
+   ],
+   "shared": [],
+   "route": [
+    "requests_hook_cb",
+    "route-hook-0x800716c"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 18,
+   "live_daddr": 18,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 18,
+     "want": 18,
+     "delivered": true,
+     "t": 1791891697.907,
+     "ticks": 2663
+    }
+   ],
+   "faults": 0,
+   "wall_s": 2.7,
+   "first_setup": [
+    "8006000100001200"
+   ],
+   "err": null
+  },
+  {
+   "id": "E_IF1_GET_DESC_REPORT",
+   "hit": true,
+   "live": true,
+   "resp": {
+    "status": "ok",
+    "len": 182,
+    "sha256": "10f5a3c8fe3cb29d111584cea1193f0f3ed1eaf8127871e35d04c06b5cbfdd16"
+   },
+   "credited": [
+    "E_IF1_GET_DESC_REPORT"
+   ],
+   "own": [
+    "E_IF0_GET_DESC_REPORT+E_IF1_GET_DESC_REPORT+E_IF2_GET_DESC_REPORT"
+   ],
+   "shared": [],
+   "route": [
+    "get_usb_descriptor",
+    "requests_hook_cb",
+    "route-hook-0x80071b6"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 38,
+   "live_daddr": 38,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 38,
+     "want": 38,
+     "delivered": true,
+     "t": 1791891697.935,
+     "ticks": 2713
+    }
+   ],
+   "faults": 0,
+   "wall_s": 2.7,
+   "first_setup": [
+    "8006000100001200"
+   ],
+   "err": null
+  },
+  {
+   "id": "E_IF1_SET_REPORT_OUT_ID6",
+   "hit": true,
+   "live": true,
+   "resp": {
+    "status": "ok",
+    "len": 0,
+    "sha256": null
+   },
+   "credited": [
+    "E_IF1_SET_REPORT_OUT_ID6"
+   ],
+   "own": [
+    "E_IF1_SET_REPORT_OUT_ID6"
+   ],
+   "shared": [],
+   "route": [
+    "requests_hook_cb",
+    "route-hook-0x800716c"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 96,
+   "live_daddr": 96,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 96,
+     "want": 96,
+     "delivered": true,
+     "t": 1791891700.681,
+     "ticks": 2658
+    }
+   ],
+   "faults": 0,
+   "wall_s": 2.7,
+   "first_setup": [
+    "8006000100001200"
+   ],
+   "err": null
+  },
+  {
+   "id": "E_IF2_GET_IDLE",
+   "hit": true,
+   "live": true,
+   "resp": {
+    "status": "ok",
+    "len": 1,
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   },
+   "credited": [
+    "E_IF2_GET_IDLE"
+   ],
+   "own": [
+    "E_IF0_GET_IDLE+E_IF1_GET_IDLE+E_IF2_GET_IDLE"
+   ],
+   "shared": [],
+   "route": [
+    "requests_hook_cb"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 78,
+   "live_daddr": 78,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 78,
+     "want": 78,
+     "delivered": true,
+     "t": 1791891700.696,
+     "ticks": 2680
+    }
+   ],
+   "faults": 0,
+   "wall_s": 2.7,
+   "first_setup": [
+    "8006000100001200"
+   ],
+   "err": null
+  },
+  {
+   "id": "E_IF2_SET_PROTOCOL",
+   "hit": true,
+   "live": true,
+   "resp": {
+    "status": "ok",
+    "len": 0,
+    "sha256": null
+   },
+   "credited": [
+    "E_IF2_SET_PROTOCOL"
+   ],
+   "own": [
+    "E_IF1_SET_PROTOCOL+E_IF2_SET_PROTOCOL"
+   ],
+   "shared": [],
+   "route": [
+    "requests_hook_cb"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 100,
+   "live_daddr": 100,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 100,
+     "want": 100,
+     "delivered": true,
+     "t": 1791891703.468,
+     "ticks": 2720
+    }
+   ],
+   "faults": 0,
+   "wall_s": 2.7,
+   "first_setup": [
+    "8006000100001200"
+   ],
+   "err": null
+  },
+  {
+   "id": "X_DEVICE",
+   "hit": true,
+   "live": true,
+   "resp": {
+    "status": "ok",
+    "len": 18,
+    "sha256": "235ce14e86d7a721e0b69679ac5ae840df0f07b57eb73774b1dd94c702acb921"
+   },
+   "credited": [
+    "X_DEVICE"
+   ],
+   "own": [
+    "X_DEVICE"
+   ],
+   "shared": [],
+   "route": [
+    "get_usb_descriptor",
+    "requests_hook_cb",
+    "route-hook-0x80071e0",
+    "route-std-0x8008eae"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 115,
+   "live_daddr": 115,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 115,
+     "want": 115,
+     "delivered": true,
+     "t": 1791891703.468,
+     "ticks": 2739
+    }
+   ],
+   "faults": 0,
+   "wall_s": 2.7,
+   "first_setup": [
+    "8006000100001200"
+   ],
+   "err": null
+  },
+  {
+   "id": "X_CONFIG",
+   "hit": true,
+   "live": true,
+   "resp": {
+    "status": "ok",
+    "len": 84,
+    "sha256": "6a126763e0e16d3d3949df5831afe12d7b9a1e42d1feb10587fb5d5974f0f4ee"
+   },
+   "credited": [
+    "E_IF0_GET_DESC_REPORT",
+    "E_IF1_GET_DESC_REPORT",
+    "E_IF2_GET_DESC_REPORT",
+    "X_CONFIG",
+    "X_STRING_1",
+    "X_STRING_2",
+    "X_STRING_3",
+    "X_SET_CONFIGURATION"
+   ],
+   "own": [
+    "E_IF0_GET_DESC_REPORT+E_IF1_GET_DESC_REPORT+E_IF2_GET_DESC_REPORT",
+    "E_IF0_GET_DESC_REPORT+E_IF1_GET_DESC_REPORT+E_IF2_GET_DESC_REPORT",
+    "E_IF0_GET_DESC_REPORT+E_IF1_GET_DESC_REPORT+E_IF2_GET_DESC_REPORT",
+    "X_CONFIG",
+    "X_SET_CONFIGURATION",
+    "X_STRING_0",
+    "X_STRING_1",
+    "X_STRING_2",
+    "X_STRING_3"
+   ],
+   "shared": [],
+   "route": [
+    "get_usb_descriptor",
+    "requests_hook_cb",
+    "route-hook-0x80071b6",
+    "route-hook-0x80071e0",
+    "route-std-0x8008eae"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 94,
+   "live_daddr": 94,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 94,
+     "want": 94,
+     "delivered": true,
+     "t": 1791891706.204,
+     "ticks": 2736
+    }
+   ],
+   "faults": 0,
+   "wall_s": 2.7,
+   "first_setup": [
+    "8006000100001200"
+   ],
+   "err": null
+  },
+  {
+   "id": "X_STRING_3",
+   "hit": true,
+   "live": true,
+   "resp": {
+    "status": "ok",
+    "len": 66,
+    "sha256": "bc44f7b1025633103ca09579d317bad1d90962c0b0084222576553dd34b8f3c7"
+   },
+   "credited": [
+    "X_STRING_3"
+   ],
+   "own": [
+    "X_STRING_3"
+   ],
+   "shared": [],
+   "route": [
+    "get_usb_descriptor",
+    "requests_hook_cb",
+    "route-hook-0x80071e0",
+    "route-std-0x8008eae"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 13,
+   "live_daddr": 13,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 13,
+     "want": 13,
+     "delivered": true,
+     "t": 1791891706.23,
+     "ticks": 2788
+    }
+   ],
+   "faults": 0,
+   "wall_s": 2.7,
+   "first_setup": [
+    "8006000100001200"
+   ],
+   "err": null
+  },
+  {
+   "id": "X_SET_CONFIGURATION",
+   "hit": true,
+   "live": true,
+   "resp": {
+    "status": "ok",
+    "len": 0,
+    "sha256": null
+   },
+   "credited": [
+    "X_SET_CONFIGURATION"
+   ],
+   "own": [
+    "X_SET_CONFIGURATION"
+   ],
+   "shared": [],
+   "route": [
+    "requests_hook_cb",
+    "route-hook-0x80071e0"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 86,
+   "live_daddr": 86,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 86,
+     "want": 86,
+     "delivered": true,
+     "t": 1791891708.965,
+     "ticks": 2783
+    }
+   ],
+   "faults": 0,
+   "wall_s": 2.7,
+   "first_setup": [
+    "8006000100001200"
+   ],
+   "err": null
+  }
+ ],
+ "controls": [
+  {
+   "id": "ctl-vendor-request",
+   "hit": null,
+   "live": true,
+   "resp": {
+    "status": "stall",
+    "len": 0,
+    "sha256": null
+   },
+   "credited": [],
+   "own": [],
+   "shared": [
+    "std-stall"
+   ],
+   "route": [
+    "requests_hook_cb",
+    "route-hook-0x80071e0"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 24,
+   "live_daddr": 24,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 24,
+     "want": 24,
+     "delivered": true,
+     "t": 1791891709.006,
+     "ticks": 2779
+    }
+   ],
+   "faults": 0,
+   "wall_s": 2.7,
+   "first_setup": [
+    "8006000100001200"
+   ],
+   "err": null,
+   "control_scores": {
+    "declared_entries_credited": [],
+    "first_hit_rule_credited": [],
+    "any_own_hit": []
+   }
+  },
+  {
+   "id": "ctl-silence",
+   "hit": null,
+   "live": true,
+   "resp": null,
+   "credited": [],
+   "own": [],
+   "shared": [],
+   "route": [],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 17,
+   "live_daddr": 17,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 17,
+     "want": 17,
+     "delivered": true,
+     "t": 1791891713.233,
+     "ticks": 4757
+    }
+   ],
+   "faults": 0,
+   "wall_s": 4.2,
+   "first_setup": [
+    "8006000100001200"
+   ],
+   "err": null,
+   "control_scores": {
+    "declared_entries_credited": [],
+    "first_hit_rule_credited": [],
+    "any_own_hit": []
+   }
+  },
+  {
+   "id": "mal-set-report-if0-wlength-0",
+   "hit": null,
+   "live": true,
+   "resp": {
+    "status": "ok",
+    "len": 0,
+    "sha256": null
+   },
+   "credited": [],
+   "own": [
+    "E_IF0_SET_REPORT_OUT"
+   ],
+   "shared": [],
+   "route": [
+    "requests_hook_cb",
+    "route-hook-0x800716c"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 37,
+   "live_daddr": 37,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 37,
+     "want": 37,
+     "delivered": true,
+     "t": 1791891711.769,
+     "ticks": 2716
+    }
+   ],
+   "faults": 0,
+   "wall_s": 2.7,
+   "first_setup": [
+    "8006000100001200"
+   ],
+   "err": null,
+   "control_scores": {
+    "declared_entries_credited": [],
+    "first_hit_rule_credited": [],
+    "any_own_hit": [
+     "E_IF0_SET_REPORT_OUT"
+    ]
+   }
+  }
+ ]
+}

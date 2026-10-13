@@ -1,0 +1,3461 @@
+{
+ "E_IF0_GET_REPORT": {
+  "row": "device-planck-rev6-stm32f303",
+  "entry": "E_IF0_GET_REPORT",
+  "class": "input",
+  "input": [
+   "REQ e0 a1 01 0100 0000 0008"
+  ],
+  "entry_meta": {
+   "id": "E_IF0_GET_REPORT",
+   "class": "input",
+   "census_id": "iface0",
+   "setup": {
+    "bm": 161,
+    "req": 1,
+    "value": 256,
+    "index": 0,
+    "length": 8,
+    "setup_hex": "a101000100000800"
+   },
+   "handler": "0x80079f8",
+   "handler_kind": "hook",
+   "route": [],
+   "chain_stops": [
+    "ramload"
+   ],
+   "handler_shared_with": [
+    "E_IF1_GET_REPORT",
+    "E_IF2_GET_REPORT"
+   ],
+   "next_entry": "E_IF0_GET_IDLE"
+  },
+  "ports": [
+   39970,
+   39971,
+   39972
+  ],
+  "slot": 0,
+  "no_enum": true,
+  "addr_gate": true,
+  "gate_wrong": true,
+  "live_addr": 94,
+  "load_at_start": 16.01,
+  "bin_sha256_pristine_before": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "bin_sha256_copy": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "pid": 95264,
+  "hello": "HELLO pid=95264 device=planck-rev6-stm32f303 nonce=b08c8f334733ef39",
+  "pre": {
+   "ended": "ticks",
+   "ticks": 685,
+   "wall": 0.3
+  },
+  "boot_s": 0.8,
+  "boot_bridge_lines": 0,
+  "ticks_at_input": 685,
+  "entry_settle": {
+   "ended": "condition",
+   "ticks": 0,
+   "wall": 0.3
+  },
+  "entry_after": {
+   "ended": "ticks",
+   "ticks": 649,
+   "wall": 0.3
+  },
+  "entry_resp": [
+   {
+    "status": "ok",
+    "len": 8,
+    "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+   }
+  ],
+  "hook_marks": [
+   52,
+   55
+  ],
+  "live_addr_settle": {
+   "ended": "condition",
+   "ticks": 648,
+   "wall": 0.3
+  },
+  "live_addr_after": {
+   "ended": "ticks",
+   "ticks": 662,
+   "wall": 0.6
+  },
+  "live_dev_settle": {
+   "ended": "ticks",
+   "ticks": 3388,
+   "wall": 2.4
+  },
+  "live_resp": {
+   "la": {
+    "status": "ok",
+    "len": 0,
+    "sha256": null
+   },
+   "ld": null
+  },
+  "live_dev_len": null,
+  "pcring": {
+   "pid": 95264,
+   "t": 1791891719.157485,
+   "passes": 18198,
+   "ticks": 6032,
+   "daddr": 94,
+   "isr_counts": {
+    "0x800a192:ipsr45:depth1": 6
+   },
+   "async_samples": 0,
+   "ring": [
+    [
+     134229276,
+     0,
+     6010,
+     18135
+    ],
+    [
+     134229276,
+     0,
+     6011,
+     18136
+    ],
+    [
+     134229276,
+     0,
+     6011,
+     18137
+    ],
+    [
+     134229276,
+     0,
+     6011,
+     18138
+    ],
+    [
+     134229276,
+     0,
+     6012,
+     18139
+    ],
+    [
+     134229276,
+     0,
+     6012,
+     18140
+    ],
+    [
+     134229276,
+     0,
+     6012,
+     18141
+    ],
+    [
+     134229276,
+     0,
+     6013,
+     18142
+    ],
+    [
+     134229276,
+     0,
+     6013,
+     18143
+    ],
+    [
+     134229276,
+     0,
+     6013,
+     18144
+    ],
+    [
+     134229276,
+     0,
+     6014,
+     18145
+    ],
+    [
+     134229276,
+     0,
+     6014,
+     18146
+    ],
+    [
+     134229276,
+     0,
+     6014,
+     18147
+    ],
+    [
+     134229276,
+     0,
+     6014,
+     18148
+    ],
+    [
+     134229276,
+     0,
+     6015,
+     18149
+    ],
+    [
+     134229276,
+     0,
+     6016,
+     18150
+    ],
+    [
+     134229276,
+     0,
+     6016,
+     18151
+    ],
+    [
+     134229276,
+     0,
+     6016,
+     18152
+    ],
+    [
+     134229276,
+     0,
+     6016,
+     18153
+    ],
+    [
+     134229276,
+     0,
+     6017,
+     18154
+    ],
+    [
+     134229276,
+     0,
+     6017,
+     18155
+    ],
+    [
+     134229276,
+     0,
+     6017,
+     18156
+    ],
+    [
+     134229276,
+     0,
+     6018,
+     18157
+    ],
+    [
+     134229276,
+     0,
+     6018,
+     18158
+    ],
+    [
+     134229276,
+     0,
+     6018,
+     18159
+    ],
+    [
+     134229276,
+     0,
+     6019,
+     18160
+    ],
+    [
+     134229276,
+     0,
+     6019,
+     18161
+    ],
+    [
+     134229276,
+     0,
+     6019,
+     18162
+    ],
+    [
+     134229276,
+     0,
+     6020,
+     18163
+    ],
+    [
+     134229276,
+     0,
+     6020,
+     18164
+    ],
+    [
+     134229276,
+     0,
+     6020,
+     18165
+    ],
+    [
+     134229276,
+     0,
+     6021,
+     18166
+    ],
+    [
+     134229276,
+     0,
+     6021,
+     18167
+    ],
+    [
+     134229276,
+     0,
+     6022,
+     18168
+    ],
+    [
+     134229276,
+     0,
+     6022,
+     18169
+    ],
+    [
+     134229276,
+     0,
+     6022,
+     18170
+    ],
+    [
+     134229276,
+     0,
+     6022,
+     18171
+    ],
+    [
+     134229276,
+     0,
+     6023,
+     18172
+    ],
+    [
+     134229276,
+     0,
+     6023,
+     18173
+    ],
+    [
+     134229276,
+     0,
+     6024,
+     18174
+    ],
+    [
+     134229276,
+     0,
+     6024,
+     18175
+    ],
+    [
+     134229276,
+     0,
+     6024,
+     18176
+    ],
+    [
+     134229276,
+     0,
+     6024,
+     18177
+    ],
+    [
+     134229276,
+     0,
+     6025,
+     18178
+    ],
+    [
+     134229276,
+     0,
+     6025,
+     18179
+    ],
+    [
+     134229276,
+     0,
+     6025,
+     18180
+    ],
+    [
+     134229276,
+     0,
+     6026,
+     18181
+    ],
+    [
+     134229276,
+     0,
+     6026,
+     18182
+    ],
+    [
+     134229276,
+     0,
+     6026,
+     18183
+    ],
+    [
+     134229276,
+     0,
+     6027,
+     18184
+    ],
+    [
+     134229276,
+     0,
+     6027,
+     18185
+    ],
+    [
+     134229276,
+     0,
+     6028,
+     18186
+    ],
+    [
+     134229276,
+     0,
+     6028,
+     18187
+    ],
+    [
+     134229276,
+     0,
+     6028,
+     18188
+    ],
+    [
+     134229276,
+     0,
+     6028,
+     18189
+    ],
+    [
+     134229276,
+     0,
+     6029,
+     18190
+    ],
+    [
+     134229276,
+     0,
+     6029,
+     18191
+    ],
+    [
+     134229276,
+     0,
+     6030,
+     18192
+    ],
+    [
+     134229276,
+     0,
+     6030,
+     18193
+    ],
+    [
+     134229276,
+     0,
+     6030,
+     18194
+    ],
+    [
+     134229276,
+     0,
+     6030,
+     18195
+    ],
+    [
+     134229276,
+     0,
+     6031,
+     18196
+    ],
+    [
+     134229276,
+     0,
+     6031,
+     18197
+    ],
+    [
+     134229276,
+     0,
+     6032,
+     18198
+    ]
+   ],
+   "dropped": {},
+   "dropped_total": 0
+  },
+  "rc": -15,
+  "wall_s": 4.8,
+  "bin_sha256_pristine_after": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "bin_sha256_copy_after": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "emu_log_bytes": 4170,
+  "faults": 0,
+  "fault_lines": [],
+  "host_setups_logged": [],
+  "unicorn_backend_sha256": "18abc4d7176bef732dc310ce1a9f80e03a316a513b12a14bef6cd6eed4c2d3cd",
+  "load_at_end": 15.85,
+  "hook_log_pid_ok": true,
+  "hooks_registered": 43,
+  "hooks_expected": 43,
+  "no_enum_patched": true,
+  "probe_errors": [],
+  "boot_hit_count": 0,
+  "boot_hits": [],
+  "entry_hits": [
+   {
+    "k": "entry",
+    "pc": 134246648,
+    "label": "requests_hook_cb",
+    "ipsr": 91,
+    "depth": 1,
+    "setup": "a101000100000800",
+    "r1": 8,
+    "out": null,
+    "daddr": 0,
+    "ticks": 821
+   },
+   {
+    "k": "own",
+    "pc": 134248952,
+    "label": "E_IF0_GET_REPORT+E_IF1_GET_REPORT+E_IF2_GET_REPORT",
+    "ipsr": 91,
+    "depth": 1,
+    "setup": "a101000100000800",
+    "r1": 0,
+    "out": null,
+    "daddr": 0,
+    "ticks": 821
+   }
+  ],
+  "live_hits": [
+   {
+    "k": "entry",
+    "pc": 134246648,
+    "label": "requests_hook_cb",
+    "ipsr": 91,
+    "setup": "00055e0000000000",
+    "daddr": 0
+   },
+   {
+    "k": "route",
+    "pc": 134246880,
+    "label": "route-hook-0x80071e0",
+    "ipsr": 91,
+    "setup": "00055e0000000000",
+    "daddr": 0
+   },
+   {
+    "k": "own",
+    "pc": 134254354,
+    "label": "X_SET_ADDRESS",
+    "ipsr": 91,
+    "setup": "00055e0000000000",
+    "daddr": 0
+   }
+  ],
+  "isr": [
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 1,
+    "t": 1791891714.709,
+    "ticks": 50
+   },
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 2,
+    "t": 1791891714.714,
+    "ticks": 100
+   },
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 3,
+    "t": 1791891714.731,
+    "ticks": 100
+   },
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 4,
+    "t": 1791891714.735,
+    "ticks": 132
+   }
+  ],
+  "guest_setups_in_order": [
+   "a101000100000800",
+   "00055e0000000000"
+  ],
+  "ctx": {
+   "decline_loop_hooks": [
+    "0x00000000",
+    "0x00000000",
+    "0x00000000"
+   ],
+   "iface_slot_lut": "010002",
+   "report_storage": [
+    "0x2000118c",
+    "0x20001120",
+    "0x200010b4"
+   ],
+   "ticks": 821
+  },
+  "gate": [
+   {
+    "k": "gate",
+    "tag": "ld",
+    "daddr": 94,
+    "want": 95,
+    "delivered": false,
+    "t": 1791891716.813,
+    "ticks": 2854
+   }
+  ],
+  "spin": {
+   "samples": 64,
+   "tail_distinct_pcs": 1,
+   "tail_top": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "tail_ipsr": [
+    0
+   ],
+   "ticks": 6032,
+   "passes": 18198,
+   "daddr": 94,
+   "async_samples": 0,
+   "isr_counts": {
+    "0x800a192:ipsr45:depth1": 6
+   },
+   "dropped_total": 0
+  },
+  "own_fired": [
+   [
+    "E_IF0_GET_REPORT+E_IF1_GET_REPORT+E_IF2_GET_REPORT",
+    "a101000100000800",
+    91,
+    1
+   ]
+  ],
+  "route_fired": [
+   [
+    "requests_hook_cb",
+    91
+   ]
+  ],
+  "shared_fired": [],
+  "credited": [
+   "E_IF0_GET_REPORT"
+  ],
+  "live_daddr": 94,
+  "live_handler_hit": false,
+  "live_reply_ok": false,
+  "live_daddr_ok": true,
+  "live_inverted_control_matched": false,
+  "live_after": false,
+  "handler_hit": true,
+  "weak_rule_label_hit": true,
+  "control_next_identity": {
+   "next": "E_IF0_GET_IDLE",
+   "scored_true": false,
+   "any_true": false
+  },
+  "credited_other": []
+ },
+ "E_IF1_SET_REPORT_OUT_ID6": {
+  "row": "device-planck-rev6-stm32f303",
+  "entry": "E_IF1_SET_REPORT_OUT_ID6",
+  "class": "input",
+  "input": [
+   "REQ e0 21 09 0206 0001 0002 0602"
+  ],
+  "entry_meta": {
+   "id": "E_IF1_SET_REPORT_OUT_ID6",
+   "class": "input",
+   "census_id": "iface1",
+   "setup": {
+    "bm": 33,
+    "req": 9,
+    "value": 518,
+    "index": 1,
+    "length": 2,
+    "setup_hex": "2109060201000200",
+    "out_hex": "0602"
+   },
+   "handler": "0x8007270",
+   "handler_kind": "cb",
+   "route": [
+    "hook:0x800716c"
+   ],
+   "chain_stops": [
+    "store",
+    "store"
+   ],
+   "out_cb": "0x8007254",
+   "note": "the OUT-stage callback's 2-byte arm taken for Report ID 1 or 6",
+   "handler_shared_with": [],
+   "next_entry": "E_IF2_GET_DESC_HID"
+  },
+  "ports": [
+   39973,
+   39974,
+   39975
+  ],
+  "slot": 1,
+  "no_enum": true,
+  "addr_gate": true,
+  "gate_wrong": true,
+  "live_addr": 7,
+  "load_at_start": 16.01,
+  "bin_sha256_pristine_before": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "bin_sha256_copy": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "pid": 95263,
+  "hello": "HELLO pid=95263 device=planck-rev6-stm32f303 nonce=c4121548a1fe23f7",
+  "pre": {
+   "ended": "ticks",
+   "ticks": 688,
+   "wall": 0.3
+  },
+  "boot_s": 0.8,
+  "boot_bridge_lines": 0,
+  "ticks_at_input": 688,
+  "entry_settle": {
+   "ended": "condition",
+   "ticks": 0,
+   "wall": 0.3
+  },
+  "entry_after": {
+   "ended": "ticks",
+   "ticks": 638,
+   "wall": 0.3
+  },
+  "entry_resp": [
+   {
+    "status": "ok",
+    "len": 0,
+    "sha256": null
+   }
+  ],
+  "hook_marks": [
+   52,
+   56
+  ],
+  "live_addr_settle": {
+   "ended": "condition",
+   "ticks": 644,
+   "wall": 0.3
+  },
+  "live_addr_after": {
+   "ended": "ticks",
+   "ticks": 653,
+   "wall": 0.6
+  },
+  "live_dev_settle": {
+   "ended": "ticks",
+   "ticks": 3410,
+   "wall": 2.4
+  },
+  "live_resp": {
+   "la": {
+    "status": "ok",
+    "len": 0,
+    "sha256": null
+   },
+   "ld": null
+  },
+  "live_dev_len": null,
+  "pcring": {
+   "pid": 95263,
+   "t": 1791891719.1572428,
+   "passes": 18204,
+   "ticks": 6033,
+   "daddr": 7,
+   "isr_counts": {
+    "0x800a192:ipsr45:depth1": 6
+   },
+   "async_samples": 0,
+   "ring": [
+    [
+     134229276,
+     0,
+     6012,
+     18141
+    ],
+    [
+     134229276,
+     0,
+     6012,
+     18142
+    ],
+    [
+     134229276,
+     0,
+     6013,
+     18143
+    ],
+    [
+     134229276,
+     0,
+     6013,
+     18144
+    ],
+    [
+     134229276,
+     0,
+     6013,
+     18145
+    ],
+    [
+     134229276,
+     0,
+     6014,
+     18146
+    ],
+    [
+     134229276,
+     0,
+     6014,
+     18147
+    ],
+    [
+     134229276,
+     0,
+     6014,
+     18148
+    ],
+    [
+     134229276,
+     0,
+     6014,
+     18149
+    ],
+    [
+     134229276,
+     0,
+     6015,
+     18150
+    ],
+    [
+     134229276,
+     0,
+     6016,
+     18151
+    ],
+    [
+     134229276,
+     0,
+     6016,
+     18152
+    ],
+    [
+     134229276,
+     0,
+     6016,
+     18153
+    ],
+    [
+     134229276,
+     0,
+     6016,
+     18154
+    ],
+    [
+     134229276,
+     0,
+     6017,
+     18155
+    ],
+    [
+     134229276,
+     0,
+     6017,
+     18156
+    ],
+    [
+     134229276,
+     0,
+     6017,
+     18157
+    ],
+    [
+     134229276,
+     0,
+     6018,
+     18158
+    ],
+    [
+     134229276,
+     0,
+     6018,
+     18159
+    ],
+    [
+     134229276,
+     0,
+     6018,
+     18160
+    ],
+    [
+     134229276,
+     0,
+     6019,
+     18161
+    ],
+    [
+     134229276,
+     0,
+     6019,
+     18162
+    ],
+    [
+     134229276,
+     0,
+     6019,
+     18163
+    ],
+    [
+     134229276,
+     0,
+     6020,
+     18164
+    ],
+    [
+     134229276,
+     0,
+     6020,
+     18165
+    ],
+    [
+     134229276,
+     0,
+     6020,
+     18166
+    ],
+    [
+     134229276,
+     0,
+     6021,
+     18167
+    ],
+    [
+     134229276,
+     0,
+     6021,
+     18168
+    ],
+    [
+     134229276,
+     0,
+     6022,
+     18169
+    ],
+    [
+     134229276,
+     0,
+     6022,
+     18170
+    ],
+    [
+     134229276,
+     0,
+     6022,
+     18171
+    ],
+    [
+     134229276,
+     0,
+     6022,
+     18172
+    ],
+    [
+     134229276,
+     0,
+     6023,
+     18173
+    ],
+    [
+     134229276,
+     0,
+     6023,
+     18174
+    ],
+    [
+     134229276,
+     0,
+     6024,
+     18175
+    ],
+    [
+     134229276,
+     0,
+     6024,
+     18176
+    ],
+    [
+     134229276,
+     0,
+     6024,
+     18177
+    ],
+    [
+     134229276,
+     0,
+     6024,
+     18178
+    ],
+    [
+     134229276,
+     0,
+     6025,
+     18179
+    ],
+    [
+     134229276,
+     0,
+     6025,
+     18180
+    ],
+    [
+     134229276,
+     0,
+     6025,
+     18181
+    ],
+    [
+     134229276,
+     0,
+     6026,
+     18182
+    ],
+    [
+     134229276,
+     0,
+     6026,
+     18183
+    ],
+    [
+     134229276,
+     0,
+     6026,
+     18184
+    ],
+    [
+     134229276,
+     0,
+     6027,
+     18185
+    ],
+    [
+     134229276,
+     0,
+     6027,
+     18186
+    ],
+    [
+     134229276,
+     0,
+     6028,
+     18187
+    ],
+    [
+     134229276,
+     0,
+     6028,
+     18188
+    ],
+    [
+     134229276,
+     0,
+     6028,
+     18189
+    ],
+    [
+     134229276,
+     0,
+     6028,
+     18190
+    ],
+    [
+     134229276,
+     0,
+     6029,
+     18191
+    ],
+    [
+     134229276,
+     0,
+     6029,
+     18192
+    ],
+    [
+     134229276,
+     0,
+     6030,
+     18193
+    ],
+    [
+     134229276,
+     0,
+     6030,
+     18194
+    ],
+    [
+     134229276,
+     0,
+     6030,
+     18195
+    ],
+    [
+     134229276,
+     0,
+     6030,
+     18196
+    ],
+    [
+     134229276,
+     0,
+     6031,
+     18197
+    ],
+    [
+     134229276,
+     0,
+     6031,
+     18198
+    ],
+    [
+     134229276,
+     0,
+     6032,
+     18199
+    ],
+    [
+     134229276,
+     0,
+     6032,
+     18200
+    ],
+    [
+     134229276,
+     0,
+     6032,
+     18201
+    ],
+    [
+     134229276,
+     0,
+     6032,
+     18202
+    ],
+    [
+     134229276,
+     0,
+     6033,
+     18203
+    ],
+    [
+     134229276,
+     0,
+     6033,
+     18204
+    ]
+   ],
+   "dropped": {},
+   "dropped_total": 0
+  },
+  "rc": -15,
+  "wall_s": 4.8,
+  "bin_sha256_pristine_after": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "bin_sha256_copy_after": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "emu_log_bytes": 4169,
+  "faults": 0,
+  "fault_lines": [],
+  "host_setups_logged": [],
+  "unicorn_backend_sha256": "18abc4d7176bef732dc310ce1a9f80e03a316a513b12a14bef6cd6eed4c2d3cd",
+  "load_at_end": 15.85,
+  "hook_log_pid_ok": true,
+  "hooks_registered": 43,
+  "hooks_expected": 43,
+  "no_enum_patched": true,
+  "probe_errors": [],
+  "boot_hit_count": 0,
+  "boot_hits": [],
+  "entry_hits": [
+   {
+    "k": "entry",
+    "pc": 134246648,
+    "label": "requests_hook_cb",
+    "ipsr": 91,
+    "depth": 1,
+    "setup": "2109060201000200",
+    "r1": 2,
+    "out": null,
+    "daddr": 0,
+    "ticks": 814
+   },
+   {
+    "k": "route",
+    "pc": 134246764,
+    "label": "route-hook-0x800716c",
+    "ipsr": 91,
+    "depth": 1,
+    "setup": "2109060201000200",
+    "r1": 0,
+    "out": null,
+    "daddr": 0,
+    "ticks": 814
+   },
+   {
+    "k": "own",
+    "pc": 134247024,
+    "label": "E_IF1_SET_REPORT_OUT_ID6",
+    "ipsr": 91,
+    "depth": 1,
+    "setup": "2109060201000200",
+    "r1": 536877752,
+    "out": "0602",
+    "daddr": 0,
+    "ticks": 815
+   }
+  ],
+  "live_hits": [
+   {
+    "k": "entry",
+    "pc": 134246648,
+    "label": "requests_hook_cb",
+    "ipsr": 91,
+    "setup": "0005070000000000",
+    "daddr": 0
+   },
+   {
+    "k": "route",
+    "pc": 134246880,
+    "label": "route-hook-0x80071e0",
+    "ipsr": 91,
+    "setup": "0005070000000000",
+    "daddr": 0
+   },
+   {
+    "k": "own",
+    "pc": 134254354,
+    "label": "X_SET_ADDRESS",
+    "ipsr": 91,
+    "setup": "0005070000000000",
+    "daddr": 0
+   }
+  ],
+  "isr": [
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 1,
+    "t": 1791891714.709,
+    "ticks": 50
+   },
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 2,
+    "t": 1791891714.715,
+    "ticks": 100
+   },
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 3,
+    "t": 1791891714.733,
+    "ticks": 100
+   },
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 4,
+    "t": 1791891714.737,
+    "ticks": 132
+   }
+  ],
+  "guest_setups_in_order": [
+   "2109060201000200",
+   "0005070000000000"
+  ],
+  "ctx": {
+   "decline_loop_hooks": [
+    "0x00000000",
+    "0x00000000",
+    "0x00000000"
+   ],
+   "iface_slot_lut": "010002",
+   "report_storage": [
+    "0x2000118c",
+    "0x20001120",
+    "0x200010b4"
+   ],
+   "ticks": 814
+  },
+  "gate": [
+   {
+    "k": "gate",
+    "tag": "ld",
+    "daddr": 7,
+    "want": 6,
+    "delivered": false,
+    "t": 1791891716.812,
+    "ticks": 2832
+   }
+  ],
+  "spin": {
+   "samples": 64,
+   "tail_distinct_pcs": 1,
+   "tail_top": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "tail_ipsr": [
+    0
+   ],
+   "ticks": 6033,
+   "passes": 18204,
+   "daddr": 7,
+   "async_samples": 0,
+   "isr_counts": {
+    "0x800a192:ipsr45:depth1": 6
+   },
+   "dropped_total": 0
+  },
+  "own_fired": [
+   [
+    "E_IF1_SET_REPORT_OUT_ID6",
+    "2109060201000200",
+    91,
+    1
+   ]
+  ],
+  "route_fired": [
+   [
+    "requests_hook_cb",
+    91
+   ],
+   [
+    "route-hook-0x800716c",
+    91
+   ]
+  ],
+  "shared_fired": [],
+  "credited": [
+   "E_IF1_SET_REPORT_OUT_ID6"
+  ],
+  "live_daddr": 7,
+  "live_handler_hit": false,
+  "live_reply_ok": false,
+  "live_daddr_ok": true,
+  "live_inverted_control_matched": false,
+  "live_after": false,
+  "handler_hit": true,
+  "weak_rule_label_hit": true,
+  "control_next_identity": {
+   "next": "E_IF2_GET_DESC_HID",
+   "scored_true": false,
+   "any_true": false
+  },
+  "credited_other": []
+ },
+ "X_DEVICE": {
+  "row": "device-planck-rev6-stm32f303",
+  "entry": "X_DEVICE",
+  "class": "extra",
+  "input": [
+   "REQ e0 80 06 0100 0000 0012"
+  ],
+  "entry_meta": {
+   "id": "X_DEVICE",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 128,
+    "req": 6,
+    "value": 256,
+    "index": 0,
+    "length": 18,
+    "setup_hex": "8006000100001200"
+   },
+   "handler": "0x8007688",
+   "handler_kind": "gud",
+   "route": [
+    "hook:0x80071e0",
+    "std:0x8008eae"
+   ],
+   "chain_stops": [
+    "ramload",
+    "call",
+    "store"
+   ],
+   "gud_r1_at_arm": 0,
+   "handler_shared_with": [],
+   "next_entry": "X_CONFIG"
+  },
+  "ports": [
+   39973,
+   39974,
+   39975
+  ],
+  "slot": 1,
+  "no_enum": true,
+  "addr_gate": true,
+  "gate_wrong": true,
+  "live_addr": 28,
+  "load_at_start": 15.85,
+  "bin_sha256_pristine_before": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "bin_sha256_copy": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "pid": 95276,
+  "hello": "HELLO pid=95276 device=planck-rev6-stm32f303 nonce=1550a8dc99d91aac",
+  "pre": {
+   "ended": "ticks",
+   "ticks": 686,
+   "wall": 0.3
+  },
+  "boot_s": 0.8,
+  "boot_bridge_lines": 0,
+  "ticks_at_input": 686,
+  "entry_settle": {
+   "ended": "condition",
+   "ticks": 0,
+   "wall": 0.3
+  },
+  "entry_after": {
+   "ended": "ticks",
+   "ticks": 629,
+   "wall": 0.3
+  },
+  "entry_resp": [
+   {
+    "status": "ok",
+    "len": 18,
+    "sha256": "235ce14e86d7a721e0b69679ac5ae840df0f07b57eb73774b1dd94c702acb921"
+   }
+  ],
+  "hook_marks": [
+   52,
+   58
+  ],
+  "live_addr_settle": {
+   "ended": "condition",
+   "ticks": 657,
+   "wall": 0.3
+  },
+  "live_addr_after": {
+   "ended": "ticks",
+   "ticks": 671,
+   "wall": 0.6
+  },
+  "live_dev_settle": {
+   "ended": "ticks",
+   "ticks": 3391,
+   "wall": 2.4
+  },
+  "live_resp": {
+   "la": {
+    "status": "ok",
+    "len": 0,
+    "sha256": null
+   },
+   "ld": null
+  },
+  "live_dev_len": null,
+  "pcring": {
+   "pid": 95276,
+   "t": 1791891724.091504,
+   "passes": 18209,
+   "ticks": 6034,
+   "daddr": 28,
+   "isr_counts": {
+    "0x800a192:ipsr45:depth1": 6
+   },
+   "async_samples": 0,
+   "ring": [
+    [
+     134229276,
+     0,
+     6013,
+     18146
+    ],
+    [
+     134229276,
+     0,
+     6013,
+     18147
+    ],
+    [
+     134229276,
+     0,
+     6014,
+     18148
+    ],
+    [
+     134229276,
+     0,
+     6014,
+     18149
+    ],
+    [
+     134229276,
+     0,
+     6014,
+     18150
+    ],
+    [
+     134229276,
+     0,
+     6014,
+     18151
+    ],
+    [
+     134229276,
+     0,
+     6015,
+     18152
+    ],
+    [
+     134229276,
+     0,
+     6016,
+     18153
+    ],
+    [
+     134229276,
+     0,
+     6016,
+     18154
+    ],
+    [
+     134229276,
+     0,
+     6016,
+     18155
+    ],
+    [
+     134229276,
+     0,
+     6016,
+     18156
+    ],
+    [
+     134229276,
+     0,
+     6017,
+     18157
+    ],
+    [
+     134229276,
+     0,
+     6017,
+     18158
+    ],
+    [
+     134229276,
+     0,
+     6017,
+     18159
+    ],
+    [
+     134229276,
+     0,
+     6018,
+     18160
+    ],
+    [
+     134229276,
+     0,
+     6018,
+     18161
+    ],
+    [
+     134229276,
+     0,
+     6018,
+     18162
+    ],
+    [
+     134229276,
+     0,
+     6019,
+     18163
+    ],
+    [
+     134229276,
+     0,
+     6019,
+     18164
+    ],
+    [
+     134229276,
+     0,
+     6019,
+     18165
+    ],
+    [
+     134229276,
+     0,
+     6020,
+     18166
+    ],
+    [
+     134229276,
+     0,
+     6020,
+     18167
+    ],
+    [
+     134229276,
+     0,
+     6020,
+     18168
+    ],
+    [
+     134229276,
+     0,
+     6021,
+     18169
+    ],
+    [
+     134229276,
+     0,
+     6021,
+     18170
+    ],
+    [
+     134229276,
+     0,
+     6022,
+     18171
+    ],
+    [
+     134229276,
+     0,
+     6022,
+     18172
+    ],
+    [
+     134229276,
+     0,
+     6022,
+     18173
+    ],
+    [
+     134229276,
+     0,
+     6022,
+     18174
+    ],
+    [
+     134229276,
+     0,
+     6023,
+     18175
+    ],
+    [
+     134229276,
+     0,
+     6023,
+     18176
+    ],
+    [
+     134229276,
+     0,
+     6024,
+     18177
+    ],
+    [
+     134229276,
+     0,
+     6024,
+     18178
+    ],
+    [
+     134229276,
+     0,
+     6024,
+     18179
+    ],
+    [
+     134229276,
+     0,
+     6024,
+     18180
+    ],
+    [
+     134229276,
+     0,
+     6025,
+     18181
+    ],
+    [
+     134229276,
+     0,
+     6025,
+     18182
+    ],
+    [
+     134229276,
+     0,
+     6025,
+     18183
+    ],
+    [
+     134229276,
+     0,
+     6026,
+     18184
+    ],
+    [
+     134229276,
+     0,
+     6026,
+     18185
+    ],
+    [
+     134229276,
+     0,
+     6026,
+     18186
+    ],
+    [
+     134229276,
+     0,
+     6027,
+     18187
+    ],
+    [
+     134229276,
+     0,
+     6027,
+     18188
+    ],
+    [
+     134229276,
+     0,
+     6028,
+     18189
+    ],
+    [
+     134229276,
+     0,
+     6028,
+     18190
+    ],
+    [
+     134229276,
+     0,
+     6028,
+     18191
+    ],
+    [
+     134229276,
+     0,
+     6028,
+     18192
+    ],
+    [
+     134229276,
+     0,
+     6029,
+     18193
+    ],
+    [
+     134229276,
+     0,
+     6029,
+     18194
+    ],
+    [
+     134229276,
+     0,
+     6030,
+     18195
+    ],
+    [
+     134229276,
+     0,
+     6030,
+     18196
+    ],
+    [
+     134229276,
+     0,
+     6030,
+     18197
+    ],
+    [
+     134229276,
+     0,
+     6030,
+     18198
+    ],
+    [
+     134229276,
+     0,
+     6031,
+     18199
+    ],
+    [
+     134229276,
+     0,
+     6031,
+     18200
+    ],
+    [
+     134229276,
+     0,
+     6032,
+     18201
+    ],
+    [
+     134229276,
+     0,
+     6032,
+     18202
+    ],
+    [
+     134229276,
+     0,
+     6032,
+     18203
+    ],
+    [
+     134229276,
+     0,
+     6032,
+     18204
+    ],
+    [
+     134229276,
+     0,
+     6033,
+     18205
+    ],
+    [
+     134229276,
+     0,
+     6033,
+     18206
+    ],
+    [
+     134229276,
+     0,
+     6034,
+     18207
+    ],
+    [
+     134229276,
+     0,
+     6034,
+     18208
+    ],
+    [
+     134229276,
+     0,
+     6034,
+     18209
+    ]
+   ],
+   "dropped": {},
+   "dropped_total": 0
+  },
+  "rc": -15,
+  "wall_s": 4.8,
+  "bin_sha256_pristine_after": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "bin_sha256_copy_after": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "emu_log_bytes": 4318,
+  "faults": 0,
+  "fault_lines": [],
+  "host_setups_logged": [],
+  "unicorn_backend_sha256": "18abc4d7176bef732dc310ce1a9f80e03a316a513b12a14bef6cd6eed4c2d3cd",
+  "load_at_end": 15.7,
+  "hook_log_pid_ok": true,
+  "hooks_registered": 43,
+  "hooks_expected": 43,
+  "no_enum_patched": true,
+  "probe_errors": [],
+  "boot_hit_count": 0,
+  "boot_hits": [],
+  "entry_hits": [
+   {
+    "k": "entry",
+    "pc": 134246648,
+    "label": "requests_hook_cb",
+    "ipsr": 91,
+    "depth": 1,
+    "setup": "8006000100001200",
+    "r1": 18,
+    "out": null,
+    "daddr": 0,
+    "ticks": 814
+   },
+   {
+    "k": "route",
+    "pc": 134246880,
+    "label": "route-hook-0x80071e0",
+    "ipsr": 91,
+    "depth": 1,
+    "setup": "8006000100001200",
+    "r1": 18,
+    "out": null,
+    "daddr": 0,
+    "ticks": 814
+   },
+   {
+    "k": "route",
+    "pc": 134254254,
+    "label": "route-std-0x8008eae",
+    "ipsr": 91,
+    "depth": 1,
+    "setup": "8006000100001200",
+    "r1": 18,
+    "out": null,
+    "daddr": 0,
+    "ticks": 814
+   },
+   {
+    "k": "route",
+    "pc": 134247964,
+    "label": "get_usb_descriptor",
+    "ipsr": 91,
+    "depth": 1,
+    "setup": "8006000100001200",
+    "r1": 0,
+    "out": null,
+    "daddr": 0,
+    "ticks": 814
+   },
+   {
+    "k": "own",
+    "pc": 134248072,
+    "label": "X_DEVICE",
+    "ipsr": 91,
+    "depth": 1,
+    "setup": "8006000100001200",
+    "r1": 0,
+    "out": null,
+    "daddr": 0,
+    "ticks": 814
+   }
+  ],
+  "live_hits": [
+   {
+    "k": "entry",
+    "pc": 134246648,
+    "label": "requests_hook_cb",
+    "ipsr": 91,
+    "setup": "00051c0000000000",
+    "daddr": 0
+   },
+   {
+    "k": "route",
+    "pc": 134246880,
+    "label": "route-hook-0x80071e0",
+    "ipsr": 91,
+    "setup": "00051c0000000000",
+    "daddr": 0
+   },
+   {
+    "k": "own",
+    "pc": 134254354,
+    "label": "X_SET_ADDRESS",
+    "ipsr": 91,
+    "setup": "00051c0000000000",
+    "daddr": 0
+   }
+  ],
+  "isr": [
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 1,
+    "t": 1791891719.643,
+    "ticks": 50
+   },
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 2,
+    "t": 1791891719.648,
+    "ticks": 100
+   },
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 3,
+    "t": 1791891719.665,
+    "ticks": 100
+   },
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 4,
+    "t": 1791891719.669,
+    "ticks": 132
+   }
+  ],
+  "guest_setups_in_order": [
+   "8006000100001200",
+   "00051c0000000000"
+  ],
+  "ctx": {
+   "decline_loop_hooks": [
+    "0x00000000",
+    "0x00000000",
+    "0x00000000"
+   ],
+   "iface_slot_lut": "010002",
+   "report_storage": [
+    "0x2000118c",
+    "0x20001120",
+    "0x200010b4"
+   ],
+   "ticks": 814
+  },
+  "gate": [
+   {
+    "k": "gate",
+    "tag": "ld",
+    "daddr": 28,
+    "want": 29,
+    "delivered": false,
+    "t": 1791891721.756,
+    "ticks": 2861
+   }
+  ],
+  "spin": {
+   "samples": 64,
+   "tail_distinct_pcs": 1,
+   "tail_top": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "tail_ipsr": [
+    0
+   ],
+   "ticks": 6034,
+   "passes": 18209,
+   "daddr": 28,
+   "async_samples": 0,
+   "isr_counts": {
+    "0x800a192:ipsr45:depth1": 6
+   },
+   "dropped_total": 0
+  },
+  "own_fired": [
+   [
+    "X_DEVICE",
+    "8006000100001200",
+    91,
+    1
+   ]
+  ],
+  "route_fired": [
+   [
+    "get_usb_descriptor",
+    91
+   ],
+   [
+    "requests_hook_cb",
+    91
+   ],
+   [
+    "route-hook-0x80071e0",
+    91
+   ],
+   [
+    "route-std-0x8008eae",
+    91
+   ]
+  ],
+  "shared_fired": [],
+  "credited": [
+   "X_DEVICE"
+  ],
+  "live_daddr": 28,
+  "live_handler_hit": false,
+  "live_reply_ok": false,
+  "live_daddr_ok": true,
+  "live_inverted_control_matched": false,
+  "live_after": false,
+  "handler_hit": true,
+  "weak_rule_label_hit": true,
+  "control_next_identity": {
+   "next": "X_CONFIG",
+   "scored_true": false,
+   "any_true": false
+  },
+  "credited_other": []
+ },
+ "ctl-vendor-request": {
+  "row": "device-planck-rev6-stm32f303",
+  "entry": "ctl-vendor-request",
+  "class": null,
+  "input": [
+   "REQ e0 40 5a 0000 0000 0000"
+  ],
+  "entry_meta": {
+   "id": "ctl-vendor-request",
+   "setup": {
+    "bm": 64,
+    "req": 90,
+    "value": 0,
+    "index": 0,
+    "length": 0,
+    "setup_hex": "405a000000000000"
+   },
+   "static_path": [
+    "hook:0x80071e0",
+    "std:0x8008de2"
+   ]
+  },
+  "ports": [
+   39970,
+   39971,
+   39972
+  ],
+  "slot": 0,
+  "no_enum": true,
+  "addr_gate": true,
+  "gate_wrong": true,
+  "live_addr": 62,
+  "load_at_start": 15.85,
+  "bin_sha256_pristine_before": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "bin_sha256_copy": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "pid": 95277,
+  "hello": "HELLO pid=95277 device=planck-rev6-stm32f303 nonce=5458b87ad7e922a1",
+  "pre": {
+   "ended": "ticks",
+   "ticks": 687,
+   "wall": 0.3
+  },
+  "boot_s": 0.8,
+  "boot_bridge_lines": 0,
+  "ticks_at_input": 687,
+  "entry_settle": {
+   "ended": "condition",
+   "ticks": 0,
+   "wall": 0.3
+  },
+  "entry_after": {
+   "ended": "ticks",
+   "ticks": 644,
+   "wall": 0.3
+  },
+  "entry_resp": [
+   {
+    "status": "stall",
+    "len": 0,
+    "sha256": null
+   }
+  ],
+  "hook_marks": [
+   52,
+   56
+  ],
+  "live_addr_settle": {
+   "ended": "condition",
+   "ticks": 652,
+   "wall": 0.3
+  },
+  "live_addr_after": {
+   "ended": "ticks",
+   "ticks": 672,
+   "wall": 0.6
+  },
+  "live_dev_settle": {
+   "ended": "ticks",
+   "ticks": 3382,
+   "wall": 2.4
+  },
+  "live_resp": {
+   "la": {
+    "status": "ok",
+    "len": 0,
+    "sha256": null
+   },
+   "ld": null
+  },
+  "live_dev_len": null,
+  "pcring": {
+   "pid": 95277,
+   "t": 1791891724.090807,
+   "passes": 18207,
+   "ticks": 6037,
+   "daddr": 62,
+   "isr_counts": {
+    "0x800a192:ipsr45:depth1": 6
+   },
+   "async_samples": 0,
+   "ring": [
+    [
+     134229276,
+     0,
+     6016,
+     18144
+    ],
+    [
+     134229276,
+     0,
+     6016,
+     18145
+    ],
+    [
+     134229276,
+     0,
+     6016,
+     18146
+    ],
+    [
+     134229276,
+     0,
+     6017,
+     18147
+    ],
+    [
+     134229276,
+     0,
+     6017,
+     18148
+    ],
+    [
+     134229276,
+     0,
+     6017,
+     18149
+    ],
+    [
+     134229276,
+     0,
+     6018,
+     18150
+    ],
+    [
+     134229276,
+     0,
+     6018,
+     18151
+    ],
+    [
+     134229276,
+     0,
+     6018,
+     18152
+    ],
+    [
+     134229276,
+     0,
+     6019,
+     18153
+    ],
+    [
+     134229276,
+     0,
+     6019,
+     18154
+    ],
+    [
+     134229276,
+     0,
+     6019,
+     18155
+    ],
+    [
+     134229276,
+     0,
+     6020,
+     18156
+    ],
+    [
+     134229276,
+     0,
+     6020,
+     18157
+    ],
+    [
+     134229276,
+     0,
+     6020,
+     18158
+    ],
+    [
+     134229276,
+     0,
+     6021,
+     18159
+    ],
+    [
+     134229276,
+     0,
+     6021,
+     18160
+    ],
+    [
+     134229276,
+     0,
+     6022,
+     18161
+    ],
+    [
+     134229276,
+     0,
+     6022,
+     18162
+    ],
+    [
+     134229276,
+     0,
+     6022,
+     18163
+    ],
+    [
+     134229276,
+     0,
+     6022,
+     18164
+    ],
+    [
+     134229276,
+     0,
+     6023,
+     18165
+    ],
+    [
+     134229276,
+     0,
+     6023,
+     18166
+    ],
+    [
+     134229276,
+     0,
+     6024,
+     18167
+    ],
+    [
+     134229276,
+     0,
+     6024,
+     18168
+    ],
+    [
+     134229276,
+     0,
+     6024,
+     18169
+    ],
+    [
+     134229276,
+     0,
+     6024,
+     18170
+    ],
+    [
+     134229276,
+     0,
+     6025,
+     18171
+    ],
+    [
+     134229276,
+     0,
+     6025,
+     18172
+    ],
+    [
+     134229276,
+     0,
+     6025,
+     18173
+    ],
+    [
+     134229276,
+     0,
+     6026,
+     18174
+    ],
+    [
+     134229276,
+     0,
+     6026,
+     18175
+    ],
+    [
+     134229276,
+     0,
+     6026,
+     18176
+    ],
+    [
+     134229276,
+     0,
+     6027,
+     18177
+    ],
+    [
+     134229276,
+     0,
+     6027,
+     18178
+    ],
+    [
+     134229276,
+     0,
+     6028,
+     18179
+    ],
+    [
+     134229276,
+     0,
+     6028,
+     18180
+    ],
+    [
+     134229276,
+     0,
+     6028,
+     18181
+    ],
+    [
+     134229276,
+     0,
+     6028,
+     18182
+    ],
+    [
+     134229276,
+     0,
+     6029,
+     18183
+    ],
+    [
+     134229276,
+     0,
+     6029,
+     18184
+    ],
+    [
+     134229276,
+     0,
+     6030,
+     18185
+    ],
+    [
+     134229276,
+     0,
+     6030,
+     18186
+    ],
+    [
+     134229276,
+     0,
+     6030,
+     18187
+    ],
+    [
+     134229276,
+     0,
+     6030,
+     18188
+    ],
+    [
+     134229276,
+     0,
+     6031,
+     18189
+    ],
+    [
+     134229276,
+     0,
+     6031,
+     18190
+    ],
+    [
+     134229276,
+     0,
+     6032,
+     18191
+    ],
+    [
+     134229276,
+     0,
+     6032,
+     18192
+    ],
+    [
+     134229276,
+     0,
+     6032,
+     18193
+    ],
+    [
+     134229276,
+     0,
+     6032,
+     18194
+    ],
+    [
+     134229276,
+     0,
+     6033,
+     18195
+    ],
+    [
+     134229276,
+     0,
+     6033,
+     18196
+    ],
+    [
+     134229276,
+     0,
+     6034,
+     18197
+    ],
+    [
+     134229276,
+     0,
+     6034,
+     18198
+    ],
+    [
+     134229276,
+     0,
+     6034,
+     18199
+    ],
+    [
+     134229276,
+     0,
+     6035,
+     18200
+    ],
+    [
+     134229276,
+     0,
+     6035,
+     18201
+    ],
+    [
+     134229276,
+     0,
+     6035,
+     18202
+    ],
+    [
+     134229276,
+     0,
+     6036,
+     18203
+    ],
+    [
+     134229276,
+     0,
+     6036,
+     18204
+    ],
+    [
+     134229276,
+     0,
+     6036,
+     18205
+    ],
+    [
+     134229276,
+     0,
+     6036,
+     18206
+    ],
+    [
+     134229276,
+     0,
+     6037,
+     18207
+    ]
+   ],
+   "dropped": {},
+   "dropped_total": 0
+  },
+  "rc": -15,
+  "wall_s": 4.8,
+  "bin_sha256_pristine_after": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "bin_sha256_copy_after": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "emu_log_bytes": 4258,
+  "faults": 0,
+  "fault_lines": [],
+  "host_setups_logged": [],
+  "unicorn_backend_sha256": "18abc4d7176bef732dc310ce1a9f80e03a316a513b12a14bef6cd6eed4c2d3cd",
+  "load_at_end": 15.7,
+  "hook_log_pid_ok": true,
+  "hooks_registered": 43,
+  "hooks_expected": 43,
+  "no_enum_patched": true,
+  "probe_errors": [],
+  "boot_hit_count": 0,
+  "boot_hits": [],
+  "entry_hits": [
+   {
+    "k": "entry",
+    "pc": 134246648,
+    "label": "requests_hook_cb",
+    "ipsr": 91,
+    "depth": 1,
+    "setup": "405a000000000000",
+    "r1": 0,
+    "out": null,
+    "daddr": 0,
+    "ticks": 815
+   },
+   {
+    "k": "route",
+    "pc": 134246880,
+    "label": "route-hook-0x80071e0",
+    "ipsr": 91,
+    "depth": 1,
+    "setup": "405a000000000000",
+    "r1": 0,
+    "out": null,
+    "daddr": 0,
+    "ticks": 815
+   },
+   {
+    "k": "shared",
+    "pc": 134254050,
+    "label": "std-stall",
+    "ipsr": 91,
+    "depth": 1,
+    "setup": "405a000000000000",
+    "r1": 0,
+    "out": null,
+    "daddr": 0,
+    "ticks": 815
+   }
+  ],
+  "live_hits": [
+   {
+    "k": "entry",
+    "pc": 134246648,
+    "label": "requests_hook_cb",
+    "ipsr": 91,
+    "setup": "00053e0000000000",
+    "daddr": 0
+   },
+   {
+    "k": "route",
+    "pc": 134246880,
+    "label": "route-hook-0x80071e0",
+    "ipsr": 91,
+    "setup": "00053e0000000000",
+    "daddr": 0
+   },
+   {
+    "k": "own",
+    "pc": 134254354,
+    "label": "X_SET_ADDRESS",
+    "ipsr": 91,
+    "setup": "00053e0000000000",
+    "daddr": 0
+   }
+  ],
+  "isr": [
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 1,
+    "t": 1791891719.643,
+    "ticks": 50
+   },
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 2,
+    "t": 1791891719.648,
+    "ticks": 100
+   },
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 3,
+    "t": 1791891719.665,
+    "ticks": 100
+   },
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 4,
+    "t": 1791891719.669,
+    "ticks": 132
+   }
+  ],
+  "guest_setups_in_order": [
+   "405a000000000000",
+   "00053e0000000000"
+  ],
+  "ctx": {
+   "decline_loop_hooks": [
+    "0x00000000",
+    "0x00000000",
+    "0x00000000"
+   ],
+   "iface_slot_lut": "010002",
+   "report_storage": [
+    "0x2000118c",
+    "0x20001120",
+    "0x200010b4"
+   ],
+   "ticks": 815
+  },
+  "gate": [
+   {
+    "k": "gate",
+    "tag": "ld",
+    "daddr": 62,
+    "want": 63,
+    "delivered": false,
+    "t": 1791891721.739,
+    "ticks": 2854
+   }
+  ],
+  "spin": {
+   "samples": 64,
+   "tail_distinct_pcs": 1,
+   "tail_top": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "tail_ipsr": [
+    0
+   ],
+   "ticks": 6037,
+   "passes": 18207,
+   "daddr": 62,
+   "async_samples": 0,
+   "isr_counts": {
+    "0x800a192:ipsr45:depth1": 6
+   },
+   "dropped_total": 0
+  },
+  "own_fired": [],
+  "route_fired": [
+   [
+    "requests_hook_cb",
+    91
+   ],
+   [
+    "route-hook-0x80071e0",
+    91
+   ]
+  ],
+  "shared_fired": [
+   [
+    "std-stall",
+    "405a000000000000"
+   ]
+  ],
+  "credited": [],
+  "live_daddr": 62,
+  "live_handler_hit": false,
+  "live_reply_ok": false,
+  "live_daddr_ok": true,
+  "live_inverted_control_matched": false,
+  "live_after": false,
+  "control_scores": {
+   "declared_entries_credited": [],
+   "first_hit_rule_credited": [],
+   "any_own_hit": []
+  }
+ },
+ "ctl-silence": {
+  "row": "device-planck-rev6-stm32f303",
+  "entry": "ctl-silence",
+  "class": null,
+  "input": [],
+  "entry_meta": {
+   "id": "ctl-silence",
+   "setup": null
+  },
+  "ports": [
+   39973,
+   39974,
+   39975
+  ],
+  "slot": 1,
+  "no_enum": true,
+  "addr_gate": true,
+  "gate_wrong": true,
+  "live_addr": 6,
+  "load_at_start": 15.7,
+  "bin_sha256_pristine_before": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "bin_sha256_copy": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "pid": 95288,
+  "hello": "HELLO pid=95288 device=planck-rev6-stm32f303 nonce=db852814e5178796",
+  "pre": {
+   "ended": "ticks",
+   "ticks": 694,
+   "wall": 0.3
+  },
+  "boot_s": 0.8,
+  "boot_bridge_lines": 0,
+  "ticks_at_input": 694,
+  "entry_settle": {
+   "ended": "ticks",
+   "ticks": 2030,
+   "wall": 1.5
+  },
+  "entry_after": {
+   "ended": "ticks",
+   "ticks": 673,
+   "wall": 0.6
+  },
+  "entry_resp": [],
+  "hook_marks": [
+   52,
+   52
+  ],
+  "live_addr_settle": {
+   "ended": "condition",
+   "ticks": 649,
+   "wall": 0.3
+  },
+  "live_addr_after": {
+   "ended": "ticks",
+   "ticks": 672,
+   "wall": 0.6
+  },
+  "live_dev_settle": {
+   "ended": "ticks",
+   "ticks": 3396,
+   "wall": 2.4
+  },
+  "live_resp": {
+   "la": {
+    "status": "ok",
+    "len": 0,
+    "sha256": null
+   },
+   "ld": null
+  },
+  "live_dev_len": null,
+  "pcring": {
+   "pid": 95288,
+   "t": 1791891730.476545,
+   "passes": 24364,
+   "ticks": 8114,
+   "daddr": 6,
+   "isr_counts": {
+    "0x800a192:ipsr45:depth1": 8
+   },
+   "async_samples": 0,
+   "ring": [
+    [
+     134229276,
+     0,
+     8093,
+     24301
+    ],
+    [
+     134229276,
+     0,
+     8093,
+     24302
+    ],
+    [
+     134229276,
+     0,
+     8093,
+     24303
+    ],
+    [
+     134229276,
+     0,
+     8093,
+     24304
+    ],
+    [
+     134229276,
+     0,
+     8094,
+     24305
+    ],
+    [
+     134229276,
+     0,
+     8094,
+     24306
+    ],
+    [
+     134229276,
+     0,
+     8095,
+     24307
+    ],
+    [
+     134229276,
+     0,
+     8095,
+     24308
+    ],
+    [
+     134229276,
+     0,
+     8095,
+     24309
+    ],
+    [
+     134229276,
+     0,
+     8096,
+     24310
+    ],
+    [
+     134229276,
+     0,
+     8096,
+     24311
+    ],
+    [
+     134229276,
+     0,
+     8096,
+     24312
+    ],
+    [
+     134229276,
+     0,
+     8096,
+     24313
+    ],
+    [
+     134229276,
+     0,
+     8097,
+     24314
+    ],
+    [
+     134229276,
+     0,
+     8098,
+     24315
+    ],
+    [
+     134229276,
+     0,
+     8098,
+     24316
+    ],
+    [
+     134229276,
+     0,
+     8098,
+     24317
+    ],
+    [
+     134229276,
+     0,
+     8098,
+     24318
+    ],
+    [
+     134229276,
+     0,
+     8099,
+     24319
+    ],
+    [
+     134229276,
+     0,
+     8099,
+     24320
+    ],
+    [
+     134229276,
+     0,
+     8099,
+     24321
+    ],
+    [
+     134229276,
+     0,
+     8100,
+     24322
+    ],
+    [
+     134229276,
+     0,
+     8100,
+     24323
+    ],
+    [
+     134229276,
+     0,
+     8100,
+     24324
+    ],
+    [
+     134229276,
+     0,
+     8101,
+     24325
+    ],
+    [
+     134229276,
+     0,
+     8101,
+     24326
+    ],
+    [
+     134229276,
+     0,
+     8101,
+     24327
+    ],
+    [
+     134229276,
+     0,
+     8102,
+     24328
+    ],
+    [
+     134229276,
+     0,
+     8102,
+     24329
+    ],
+    [
+     134229276,
+     0,
+     8102,
+     24330
+    ],
+    [
+     134229276,
+     0,
+     8103,
+     24331
+    ],
+    [
+     134229276,
+     0,
+     8103,
+     24332
+    ],
+    [
+     134229276,
+     0,
+     8103,
+     24333
+    ],
+    [
+     134229276,
+     0,
+     8103,
+     24334
+    ],
+    [
+     134229276,
+     0,
+     8104,
+     24335
+    ],
+    [
+     134229276,
+     0,
+     8104,
+     24336
+    ],
+    [
+     134229276,
+     0,
+     8105,
+     24337
+    ],
+    [
+     134229276,
+     0,
+     8105,
+     24338
+    ],
+    [
+     134229276,
+     0,
+     8106,
+     24339
+    ],
+    [
+     134229276,
+     0,
+     8106,
+     24340
+    ],
+    [
+     134229276,
+     0,
+     8106,
+     24341
+    ],
+    [
+     134229276,
+     0,
+     8106,
+     24342
+    ],
+    [
+     134229276,
+     0,
+     8107,
+     24343
+    ],
+    [
+     134229276,
+     0,
+     8107,
+     24344
+    ],
+    [
+     134229276,
+     0,
+     8107,
+     24345
+    ],
+    [
+     134229276,
+     0,
+     8108,
+     24346
+    ],
+    [
+     134229276,
+     0,
+     8108,
+     24347
+    ],
+    [
+     134229276,
+     0,
+     8108,
+     24348
+    ],
+    [
+     134229276,
+     0,
+     8109,
+     24349
+    ],
+    [
+     134229276,
+     0,
+     8109,
+     24350
+    ],
+    [
+     134229276,
+     0,
+     8109,
+     24351
+    ],
+    [
+     134229276,
+     0,
+     8109,
+     24352
+    ],
+    [
+     134229276,
+     0,
+     8110,
+     24353
+    ],
+    [
+     134229276,
+     0,
+     8111,
+     24354
+    ],
+    [
+     134229276,
+     0,
+     8111,
+     24355
+    ],
+    [
+     134229276,
+     0,
+     8111,
+     24356
+    ],
+    [
+     134229276,
+     0,
+     8112,
+     24357
+    ],
+    [
+     134229276,
+     0,
+     8112,
+     24358
+    ],
+    [
+     134229276,
+     0,
+     8112,
+     24359
+    ],
+    [
+     134229276,
+     0,
+     8112,
+     24360
+    ],
+    [
+     134229276,
+     0,
+     8113,
+     24361
+    ],
+    [
+     134229276,
+     0,
+     8113,
+     24362
+    ],
+    [
+     134229276,
+     0,
+     8114,
+     24363
+    ],
+    [
+     134229276,
+     0,
+     8114,
+     24364
+    ]
+   ],
+   "dropped": {},
+   "dropped_total": 0
+  },
+  "rc": -15,
+  "wall_s": 6.3,
+  "bin_sha256_pristine_after": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "bin_sha256_copy_after": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+  "emu_log_bytes": 4169,
+  "faults": 0,
+  "fault_lines": [],
+  "host_setups_logged": [],
+  "unicorn_backend_sha256": "18abc4d7176bef732dc310ce1a9f80e03a316a513b12a14bef6cd6eed4c2d3cd",
+  "load_at_end": 15.41,
+  "hook_log_pid_ok": true,
+  "hooks_registered": 43,
+  "hooks_expected": 43,
+  "no_enum_patched": true,
+  "probe_errors": [],
+  "boot_hit_count": 0,
+  "boot_hits": [],
+  "entry_hits": [],
+  "live_hits": [
+   {
+    "k": "entry",
+    "pc": 134246648,
+    "label": "requests_hook_cb",
+    "ipsr": 91,
+    "setup": "0005060000000000",
+    "daddr": 0
+   },
+   {
+    "k": "route",
+    "pc": 134246880,
+    "label": "route-hook-0x80071e0",
+    "ipsr": 91,
+    "setup": "0005060000000000",
+    "daddr": 0
+   },
+   {
+    "k": "own",
+    "pc": 134254354,
+    "label": "X_SET_ADDRESS",
+    "ipsr": 91,
+    "setup": "0005060000000000",
+    "daddr": 0
+   }
+  ],
+  "isr": [
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 1,
+    "t": 1791891724.527,
+    "ticks": 50
+   },
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 2,
+    "t": 1791891724.532,
+    "ticks": 100
+   },
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 3,
+    "t": 1791891724.549,
+    "ticks": 100
+   },
+   {
+    "k": "isr",
+    "pc": 134259090,
+    "label": "TIM3_IRQHandler+2(exc45)",
+    "ipsr": 45,
+    "depth": 1,
+    "n": 4,
+    "t": 1791891724.553,
+    "ticks": 132
+   }
+  ],
+  "guest_setups_in_order": [
+   "0005060000000000"
+  ],
+  "ctx": {
+   "decline_loop_hooks": [
+    "0x00000000",
+    "0x00000000",
+    "0x00000000"
+   ],
+   "iface_slot_lut": "010002",
+   "report_storage": [
+    "0x2000118c",
+    "0x20001120",
+    "0x200010b4"
+   ],
+   "ticks": 3725
+  },
+  "gate": [
+   {
+    "k": "gate",
+    "tag": "ld",
+    "daddr": 6,
+    "want": 7,
+    "delivered": false,
+    "t": 1791891728.158,
+    "ticks": 4962
+   }
+  ],
+  "spin": {
+   "samples": 64,
+   "tail_distinct_pcs": 1,
+   "tail_top": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "tail_ipsr": [
+    0
+   ],
+   "ticks": 8114,
+   "passes": 24364,
+   "daddr": 6,
+   "async_samples": 0,
+   "isr_counts": {
+    "0x800a192:ipsr45:depth1": 8
+   },
+   "dropped_total": 0
+  },
+  "own_fired": [],
+  "route_fired": [],
+  "shared_fired": [],
+  "credited": [],
+  "live_daddr": 6,
+  "live_handler_hit": false,
+  "live_reply_ok": false,
+  "live_daddr_ok": true,
+  "live_inverted_control_matched": false,
+  "live_after": false,
+  "control_scores": {
+   "declared_entries_credited": [],
+   "first_hit_rule_credited": [],
+   "any_own_hit": []
+  }
+ }
+}

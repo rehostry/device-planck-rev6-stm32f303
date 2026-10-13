@@ -1,0 +1,287 @@
+{
+ "arm": "arm-gate-wrong",
+ "agg": {
+  "entries": 3,
+  "reached": 3,
+  "live": 0,
+  "boot_hits_total": 0,
+  "boot_hit_boots": 0,
+  "faults": 0,
+  "errors": [],
+  "next_identity_true": 0,
+  "credited_other": 0,
+  "inverted_ctl_true": 0,
+  "hook_log_pid_ok": 5,
+  "hello_ok": 5,
+  "bins_unchanged": true,
+  "backend_sha": [
+   "18abc4d7176bef732dc310ce1a9f80e03a316a513b12a14bef6cd6eed4c2d3cd"
+  ],
+  "distinct_live_addr": 5,
+  "own_ipsr_depth": [
+   [
+    91,
+    1
+   ]
+  ],
+  "isr_ipsr_depth": [
+   [
+    45,
+    1
+   ]
+  ],
+  "boots": 5,
+  "first_setup_is_input": 4,
+  "load_min_max": [
+   15.41,
+   16.01
+  ]
+ },
+ "entries": [
+  {
+   "id": "E_IF0_GET_REPORT",
+   "hit": true,
+   "live": false,
+   "resp": {
+    "status": "ok",
+    "len": 8,
+    "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+   },
+   "credited": [
+    "E_IF0_GET_REPORT"
+   ],
+   "own": [
+    "E_IF0_GET_REPORT+E_IF1_GET_REPORT+E_IF2_GET_REPORT"
+   ],
+   "shared": [],
+   "route": [
+    "requests_hook_cb"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 94,
+   "live_daddr": 94,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 94,
+     "want": 95,
+     "delivered": false,
+     "t": 1791891716.813,
+     "ticks": 2854
+    }
+   ],
+   "faults": 0,
+   "wall_s": 4.8,
+   "first_setup": [
+    "a101000100000800"
+   ],
+   "err": null
+  },
+  {
+   "id": "E_IF1_SET_REPORT_OUT_ID6",
+   "hit": true,
+   "live": false,
+   "resp": {
+    "status": "ok",
+    "len": 0,
+    "sha256": null
+   },
+   "credited": [
+    "E_IF1_SET_REPORT_OUT_ID6"
+   ],
+   "own": [
+    "E_IF1_SET_REPORT_OUT_ID6"
+   ],
+   "shared": [],
+   "route": [
+    "requests_hook_cb",
+    "route-hook-0x800716c"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 7,
+   "live_daddr": 7,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 7,
+     "want": 6,
+     "delivered": false,
+     "t": 1791891716.812,
+     "ticks": 2832
+    }
+   ],
+   "faults": 0,
+   "wall_s": 4.8,
+   "first_setup": [
+    "2109060201000200"
+   ],
+   "err": null
+  },
+  {
+   "id": "X_DEVICE",
+   "hit": true,
+   "live": false,
+   "resp": {
+    "status": "ok",
+    "len": 18,
+    "sha256": "235ce14e86d7a721e0b69679ac5ae840df0f07b57eb73774b1dd94c702acb921"
+   },
+   "credited": [
+    "X_DEVICE"
+   ],
+   "own": [
+    "X_DEVICE"
+   ],
+   "shared": [],
+   "route": [
+    "get_usb_descriptor",
+    "requests_hook_cb",
+    "route-hook-0x80071e0",
+    "route-std-0x8008eae"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 28,
+   "live_daddr": 28,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 28,
+     "want": 29,
+     "delivered": false,
+     "t": 1791891721.756,
+     "ticks": 2861
+    }
+   ],
+   "faults": 0,
+   "wall_s": 4.8,
+   "first_setup": [
+    "8006000100001200"
+   ],
+   "err": null
+  }
+ ],
+ "controls": [
+  {
+   "id": "ctl-vendor-request",
+   "hit": null,
+   "live": false,
+   "resp": {
+    "status": "stall",
+    "len": 0,
+    "sha256": null
+   },
+   "credited": [],
+   "own": [],
+   "shared": [
+    "std-stall"
+   ],
+   "route": [
+    "requests_hook_cb",
+    "route-hook-0x80071e0"
+   ],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 62,
+   "live_daddr": 62,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 62,
+     "want": 63,
+     "delivered": false,
+     "t": 1791891721.739,
+     "ticks": 2854
+    }
+   ],
+   "faults": 0,
+   "wall_s": 4.8,
+   "first_setup": [
+    "405a000000000000"
+   ],
+   "err": null,
+   "control_scores": {
+    "declared_entries_credited": [],
+    "first_hit_rule_credited": [],
+    "any_own_hit": []
+   }
+  },
+  {
+   "id": "ctl-silence",
+   "hit": null,
+   "live": false,
+   "resp": null,
+   "credited": [],
+   "own": [],
+   "shared": [],
+   "route": [],
+   "spin": [
+    [
+     "0x8002d1c",
+     16
+    ]
+   ],
+   "spin_ipsr": [
+    0
+   ],
+   "live_addr": 6,
+   "live_daddr": 6,
+   "gate": [
+    {
+     "k": "gate",
+     "tag": "ld",
+     "daddr": 6,
+     "want": 7,
+     "delivered": false,
+     "t": 1791891728.158,
+     "ticks": 4962
+    }
+   ],
+   "faults": 0,
+   "wall_s": 6.3,
+   "first_setup": [
+    "0005060000000000"
+   ],
+   "err": null,
+   "control_scores": {
+    "declared_entries_credited": [],
+    "first_hit_rule_credited": [],
+    "any_own_hit": []
+   }
+  }
+ ]
+}

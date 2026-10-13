@@ -1,0 +1,24 @@
+== START 2026-10-13T11:41:29Z
+uptime:  6:41  up 7 days,  7:47, 8 users, load averages: 16.62 11.57 9.08
+venv: .venv-dev (3.12.12)
+halucinator: <rehostry>/halucinator/src/halucinator/__init__.py
+unicorn: 2.1.4
+unicorn_backend.py sha256: 18abc4d7176bef732dc310ce1a9f80e03a316a513b12a14bef6cd6eed4c2d3cd
+core HEAD: b8ddb313b5890be3f00be7392fb147da4ab3bf1f branch: feat/falcon-ghidra-backend dirty(tracked): 0
+row package: <rehostry>/device-planck-rev6-stm32f303/src/rehostry_planck/__init__.py
+row HEAD: 51fdd24825651ed0f82d315aa4933008728fd36e dirty(tracked): 0
+image sha256: cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b
+fuzz_reach_targets --check: PASS (41 entries, 43 hooks, bin cac8ac4dcb632e1c)
+workers: 2  extra: --with-enum --only E_IF0_GET_DESC_HID E_IF0_GET_REPORT E_IF0_SET_IDLE E_IF0_SET_PROTOCOL E_IF0_SET_REPORT_OUT E_IF1_GET_DESC_REPORT E_IF1_SET_REPORT_OUT_ID6 E_IF2_GET_IDLE E_IF2_SET_PROTOCOL X_DEVICE X_CONFIG X_STRING_3 X_SET_CONFIGURATION ctl-vendor-request ctl-silence mal-set-report-if0-wlength-0
+sweep exit status: 0
+== END 2026-10-13T11:41:53Z
+uptime:  6:41  up 7 days,  7:48, 8 users, load averages: 16.01 11.83 9.24
+venv: .venv-dev (3.12.12)
+halucinator: <rehostry>/halucinator/src/halucinator/__init__.py
+unicorn: 2.1.4
+unicorn_backend.py sha256: 18abc4d7176bef732dc310ce1a9f80e03a316a513b12a14bef6cd6eed4c2d3cd
+core HEAD: b8ddb313b5890be3f00be7392fb147da4ab3bf1f branch: feat/falcon-ghidra-backend dirty(tracked): 0
+row package: <rehostry>/device-planck-rev6-stm32f303/src/rehostry_planck/__init__.py
+row HEAD: 51fdd24825651ed0f82d315aa4933008728fd36e dirty(tracked): 0
+image sha256: cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b
+fuzz_reach_targets --check: PASS (41 entries, 43 hooks, bin cac8ac4dcb632e1c)

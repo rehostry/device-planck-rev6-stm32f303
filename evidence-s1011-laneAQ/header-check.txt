@@ -1,0 +1,5 @@
+inserted: ' fuzz_reach=41of41 fuzz_live=41of41'
+old line == new line minus the inserted tokens (byte for byte): True
+before census_score.score: ('true', 'true', 'M8', 'M4-OK', 'milestone M8')
+after census_score.score: ('true', 'true', 'M8', 'M4-OK', 'milestone M8')
+n= before/after: None None | milestone before/after: M8 M8
