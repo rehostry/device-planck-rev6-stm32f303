@@ -25,8 +25,9 @@ an OUT-stage callback the first OUT bytes read through the guest's own
 
 OPT-IN SWITCHES (row-local; this module patches the row's host model IN THIS
 PROCESS ONLY; unset, nothing is changed -- the mute control):
-* ``FUZZ_REACH_NO_ENUM=1`` -- empty the host model's own enumeration script, so
-  the input is the first SETUP on the wire (only the bus reset precedes it).
+* ``FUZZ_REACH_NO_ENUM=1`` -- empty the host model's own enumeration script and
+  its follow-up requests, so the input is the first SETUP on the wire (only the
+  bus reset precedes it) and the host sends nothing the harness did not ask for.
 * ``FUZZ_REACH_ADDR_GATE=<A>`` -- the host delivers the request tagged ``ld``
   only if the GUEST's own device-address register reads ``A`` (a controller
   accepts a SETUP only at its own address). The row's controller model does
@@ -69,8 +70,22 @@ def _row_daddr():
 
 
 def _row_patch_no_enum() -> None:
+    """Empty the host model's enumeration script AND its reactions: on a
+    CONFIGURATION reply the row's host queues GET_DESCRIPTOR(CONFIG, full),
+    four STRINGs, every REPORT descriptor and SET_CONFIGURATION by itself
+    (``UsbHost._decode``). Under this switch the host sends only what the
+    harness asks for; the reply is still decoded and recorded."""
     from ..peripheral_models import usb_host  # noqa: PLC0415
     usb_host.UsbHost._enumeration = lambda self: []  # noqa: SLF001
+    orig = usb_host.UsbHost._decode  # noqa: SLF001
+
+    def decode(self, cur, _o=orig):
+        before = list(self._pending)
+        _o(self, cur)
+        if self._pending != before:
+            _emit({"k": "host_followup_suppressed", "n": len(self._pending) - len(before)})
+            self._pending[:] = before
+    usb_host.UsbHost._decode = decode  # noqa: SLF001
 
 
 def _row_patch_addr_gate(want: int) -> None:
