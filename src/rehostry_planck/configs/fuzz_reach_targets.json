@@ -1,0 +1,1587 @@
+{
+ "row": "device-planck-rev6-stm32f303",
+ "lane": "s1011-laneAQ",
+ "bin": "planck.bin",
+ "bin_sha256": "cac8ac4dcb632e1c43c2a9b2fbbb2677a8d87e186d5f8af2030db694be86b92b",
+ "inventory_source": "census interfaces-ALL.tsv rows iface0/iface1/iface2 (INVENTORY.md), each expanded into the requests the image's own dispatch parses for that interface",
+ "located": {
+  "gud": "0x800761c",
+  "gdcb": "0x8007210",
+  "usbcfg": "0x800e4d4",
+  "hook": "0x80070f8",
+  "ep0sw": "0x8008dd2",
+  "setup_off": "0x74",
+  "gud_caller": "0x8007240",
+  "hook_nf": "0x80071e0"
+ },
+ "not_found": {
+  "hook_declines": "0x80071e0",
+  "std_stall": "0x8008de2",
+  "gud_not_found": "0x8007640"
+ },
+ "usb_exc": 91,
+ "tick_exc": 45,
+ "entries": [
+  {
+   "id": "E_IF0_GET_DESC_HID",
+   "class": "input",
+   "census_id": "iface0",
+   "setup": {
+    "bm": 129,
+    "req": 6,
+    "value": 8448,
+    "index": 0,
+    "length": 9,
+    "setup_hex": "8106002100000900"
+   },
+   "handler": "0x800766e",
+   "handler_kind": "gud",
+   "route": [
+    "hook:0x80071b6"
+   ],
+   "chain_stops": [
+    "call",
+    "store"
+   ],
+   "gud_r1_at_arm": 0,
+   "handler_shared_with": [
+    "E_IF1_GET_DESC_HID",
+    "E_IF2_GET_DESC_HID"
+   ],
+   "next_entry": "E_IF0_GET_DESC_REPORT"
+  },
+  {
+   "id": "E_IF0_GET_DESC_REPORT",
+   "class": "input",
+   "census_id": "iface0",
+   "setup": {
+    "bm": 129,
+    "req": 6,
+    "value": 8704,
+    "index": 0,
+    "length": 68,
+    "setup_hex": "8106002200004400"
+   },
+   "handler": "0x800767c",
+   "handler_kind": "gud",
+   "route": [
+    "hook:0x80071b6"
+   ],
+   "chain_stops": [
+    "call",
+    "store"
+   ],
+   "gud_r1_at_arm": 0,
+   "handler_shared_with": [
+    "E_IF1_GET_DESC_REPORT",
+    "E_IF2_GET_DESC_REPORT"
+   ],
+   "next_entry": "E_IF0_GET_REPORT"
+  },
+  {
+   "id": "E_IF0_GET_REPORT",
+   "class": "input",
+   "census_id": "iface0",
+   "setup": {
+    "bm": 161,
+    "req": 1,
+    "value": 256,
+    "index": 0,
+    "length": 8,
+    "setup_hex": "a101000100000800"
+   },
+   "handler": "0x80079f8",
+   "handler_kind": "hook",
+   "route": [],
+   "chain_stops": [
+    "ramload"
+   ],
+   "handler_shared_with": [
+    "E_IF1_GET_REPORT",
+    "E_IF2_GET_REPORT"
+   ],
+   "next_entry": "E_IF0_GET_IDLE"
+  },
+  {
+   "id": "E_IF0_GET_IDLE",
+   "class": "input",
+   "census_id": "iface0",
+   "setup": {
+    "bm": 161,
+    "req": 2,
+    "value": 0,
+    "index": 0,
+    "length": 1,
+    "setup_hex": "a102000000000100"
+   },
+   "handler": "0x8007c44",
+   "handler_kind": "hook",
+   "route": [],
+   "chain_stops": [
+    "ramload"
+   ],
+   "handler_shared_with": [
+    "E_IF1_GET_IDLE",
+    "E_IF2_GET_IDLE"
+   ],
+   "next_entry": "E_IF0_SET_IDLE"
+  },
+  {
+   "id": "E_IF0_SET_IDLE",
+   "class": "input",
+   "census_id": "iface0",
+   "setup": {
+    "bm": 33,
+    "req": 10,
+    "value": 0,
+    "index": 0,
+    "length": 0,
+    "setup_hex": "210a000000000000"
+   },
+   "handler": "0x8007c94",
+   "handler_kind": "hookcont",
+   "route": [
+    "hook:0x8007194"
+   ],
+   "chain_stops": [
+    "call",
+    "ramload"
+   ],
+   "handler_shared_with": [
+    "E_IF1_SET_IDLE",
+    "E_IF2_SET_IDLE"
+   ],
+   "next_entry": "E_IF0_GET_PROTOCOL"
+  },
+  {
+   "id": "E_IF0_GET_PROTOCOL",
+   "class": "input",
+   "census_id": "iface0",
+   "setup": {
+    "bm": 161,
+    "req": 3,
+    "value": 0,
+    "index": 0,
+    "length": 1,
+    "setup_hex": "a103000000000100"
+   },
+   "handler": "0x8007134",
+   "handler_kind": "hook",
+   "route": [],
+   "chain_stops": [
+    "call"
+   ],
+   "handler_shared_with": [],
+   "next_entry": "E_IF0_SET_PROTOCOL"
+  },
+  {
+   "id": "E_IF0_SET_PROTOCOL",
+   "class": "input",
+   "census_id": "iface0",
+   "setup": {
+    "bm": 33,
+    "req": 11,
+    "value": 1,
+    "index": 0,
+    "length": 0,
+    "setup_hex": "210b010000000000"
+   },
+   "handler": "0x8007184",
+   "handler_kind": "hook",
+   "route": [],
+   "chain_stops": [
+    "call"
+   ],
+   "handler_shared_with": [],
+   "next_entry": "E_IF0_SET_REPORT_OUT"
+  },
+  {
+   "id": "E_IF0_SET_REPORT_OUT",
+   "class": "input",
+   "census_id": "iface0",
+   "setup": {
+    "bm": 33,
+    "req": 9,
+    "value": 512,
+    "index": 0,
+    "length": 1,
+    "setup_hex": "2109000200000100",
+    "out_hex": "02"
+   },
+   "handler": "0x8007276",
+   "handler_kind": "cb",
+   "route": [
+    "hook:0x800716c"
+   ],
+   "chain_stops": [
+    "store",
+    "store"
+   ],
+   "out_cb": "0x8007254",
+   "note": "the OUT-stage callback's 1-byte arm (wLength != 2: the byte is the LED state)",
+   "handler_shared_with": [],
+   "next_entry": "E_IF1_GET_DESC_HID"
+  },
+  {
+   "id": "E_IF1_GET_DESC_HID",
+   "class": "input",
+   "census_id": "iface1",
+   "setup": {
+    "bm": 129,
+    "req": 6,
+    "value": 8448,
+    "index": 1,
+    "length": 9,
+    "setup_hex": "8106002101000900"
+   },
+   "handler": "0x800766e",
+   "handler_kind": "gud",
+   "route": [
+    "hook:0x80071b6"
+   ],
+   "chain_stops": [
+    "call",
+    "store"
+   ],
+   "gud_r1_at_arm": 1,
+   "handler_shared_with": [
+    "E_IF0_GET_DESC_HID",
+    "E_IF2_GET_DESC_HID"
+   ],
+   "next_entry": "E_IF1_GET_DESC_REPORT"
+  },
+  {
+   "id": "E_IF1_GET_DESC_REPORT",
+   "class": "input",
+   "census_id": "iface1",
+   "setup": {
+    "bm": 129,
+    "req": 6,
+    "value": 8704,
+    "index": 1,
+    "length": 182,
+    "setup_hex": "810600220100b600"
+   },
+   "handler": "0x800767c",
+   "handler_kind": "gud",
+   "route": [
+    "hook:0x80071b6"
+   ],
+   "chain_stops": [
+    "call",
+    "store"
+   ],
+   "gud_r1_at_arm": 1,
+   "handler_shared_with": [
+    "E_IF0_GET_DESC_REPORT",
+    "E_IF2_GET_DESC_REPORT"
+   ],
+   "next_entry": "E_IF1_GET_REPORT"
+  },
+  {
+   "id": "E_IF1_GET_REPORT",
+   "class": "input",
+   "census_id": "iface1",
+   "setup": {
+    "bm": 161,
+    "req": 1,
+    "value": 262,
+    "index": 1,
+    "length": 32,
+    "setup_hex": "a101060101002000"
+   },
+   "handler": "0x80079f8",
+   "handler_kind": "hook",
+   "route": [],
+   "chain_stops": [
+    "ramload"
+   ],
+   "handler_shared_with": [
+    "E_IF0_GET_REPORT",
+    "E_IF2_GET_REPORT"
+   ],
+   "next_entry": "E_IF1_GET_IDLE"
+  },
+  {
+   "id": "E_IF1_GET_IDLE",
+   "class": "input",
+   "census_id": "iface1",
+   "setup": {
+    "bm": 161,
+    "req": 2,
+    "value": 0,
+    "index": 1,
+    "length": 1,
+    "setup_hex": "a102000001000100"
+   },
+   "handler": "0x8007c44",
+   "handler_kind": "hook",
+   "route": [],
+   "chain_stops": [
+    "ramload"
+   ],
+   "handler_shared_with": [
+    "E_IF0_GET_IDLE",
+    "E_IF2_GET_IDLE"
+   ],
+   "next_entry": "E_IF1_SET_IDLE"
+  },
+  {
+   "id": "E_IF1_SET_IDLE",
+   "class": "input",
+   "census_id": "iface1",
+   "setup": {
+    "bm": 33,
+    "req": 10,
+    "value": 0,
+    "index": 1,
+    "length": 0,
+    "setup_hex": "210a000001000000"
+   },
+   "handler": "0x8007c94",
+   "handler_kind": "hookcont",
+   "route": [
+    "hook:0x8007194"
+   ],
+   "chain_stops": [
+    "call",
+    "ramload"
+   ],
+   "handler_shared_with": [
+    "E_IF0_SET_IDLE",
+    "E_IF2_SET_IDLE"
+   ],
+   "next_entry": "E_IF1_SET_PROTOCOL"
+  },
+  {
+   "id": "E_IF1_SET_PROTOCOL",
+   "class": "input",
+   "census_id": "iface1",
+   "setup": {
+    "bm": 33,
+    "req": 11,
+    "value": 1,
+    "index": 1,
+    "length": 0,
+    "setup_hex": "210b010001000000"
+   },
+   "handler": "0x800718c",
+   "handler_kind": "hook",
+   "route": [],
+   "chain_stops": [
+    "store"
+   ],
+   "note": "QMK's hook ACKs SET_PROTOCOL on a non-zero interface without acting on it (its own arm, distinct from iface0's)",
+   "handler_shared_with": [
+    "E_IF2_SET_PROTOCOL"
+   ],
+   "next_entry": "E_IF1_SET_REPORT_OUT_ID6"
+  },
+  {
+   "id": "E_IF1_SET_REPORT_OUT_ID6",
+   "class": "input",
+   "census_id": "iface1",
+   "setup": {
+    "bm": 33,
+    "req": 9,
+    "value": 518,
+    "index": 1,
+    "length": 2,
+    "setup_hex": "2109060201000200",
+    "out_hex": "0602"
+   },
+   "handler": "0x8007270",
+   "handler_kind": "cb",
+   "route": [
+    "hook:0x800716c"
+   ],
+   "chain_stops": [
+    "store",
+    "store"
+   ],
+   "out_cb": "0x8007254",
+   "note": "the OUT-stage callback's 2-byte arm taken for Report ID 1 or 6",
+   "handler_shared_with": [],
+   "next_entry": "E_IF2_GET_DESC_HID"
+  },
+  {
+   "id": "E_IF2_GET_DESC_HID",
+   "class": "input",
+   "census_id": "iface2",
+   "setup": {
+    "bm": 129,
+    "req": 6,
+    "value": 8448,
+    "index": 2,
+    "length": 9,
+    "setup_hex": "8106002102000900"
+   },
+   "handler": "0x800766e",
+   "handler_kind": "gud",
+   "route": [
+    "hook:0x80071b6"
+   ],
+   "chain_stops": [
+    "call",
+    "store"
+   ],
+   "gud_r1_at_arm": 2,
+   "handler_shared_with": [
+    "E_IF0_GET_DESC_HID",
+    "E_IF1_GET_DESC_HID"
+   ],
+   "next_entry": "E_IF2_GET_DESC_REPORT"
+  },
+  {
+   "id": "E_IF2_GET_DESC_REPORT",
+   "class": "input",
+   "census_id": "iface2",
+   "setup": {
+    "bm": 129,
+    "req": 6,
+    "value": 8704,
+    "index": 2,
+    "length": 21,
+    "setup_hex": "8106002202001500"
+   },
+   "handler": "0x800767c",
+   "handler_kind": "gud",
+   "route": [
+    "hook:0x80071b6"
+   ],
+   "chain_stops": [
+    "call",
+    "store"
+   ],
+   "gud_r1_at_arm": 2,
+   "handler_shared_with": [
+    "E_IF0_GET_DESC_REPORT",
+    "E_IF1_GET_DESC_REPORT"
+   ],
+   "next_entry": "E_IF2_GET_REPORT"
+  },
+  {
+   "id": "E_IF2_GET_REPORT",
+   "class": "input",
+   "census_id": "iface2",
+   "setup": {
+    "bm": 161,
+    "req": 1,
+    "value": 256,
+    "index": 2,
+    "length": 32,
+    "setup_hex": "a101000102002000"
+   },
+   "handler": "0x80079f8",
+   "handler_kind": "hook",
+   "route": [],
+   "chain_stops": [
+    "ramload"
+   ],
+   "handler_shared_with": [
+    "E_IF0_GET_REPORT",
+    "E_IF1_GET_REPORT"
+   ],
+   "next_entry": "E_IF2_GET_IDLE"
+  },
+  {
+   "id": "E_IF2_GET_IDLE",
+   "class": "input",
+   "census_id": "iface2",
+   "setup": {
+    "bm": 161,
+    "req": 2,
+    "value": 0,
+    "index": 2,
+    "length": 1,
+    "setup_hex": "a102000002000100"
+   },
+   "handler": "0x8007c44",
+   "handler_kind": "hook",
+   "route": [],
+   "chain_stops": [
+    "ramload"
+   ],
+   "handler_shared_with": [
+    "E_IF0_GET_IDLE",
+    "E_IF1_GET_IDLE"
+   ],
+   "next_entry": "E_IF2_SET_IDLE"
+  },
+  {
+   "id": "E_IF2_SET_IDLE",
+   "class": "input",
+   "census_id": "iface2",
+   "setup": {
+    "bm": 33,
+    "req": 10,
+    "value": 0,
+    "index": 2,
+    "length": 0,
+    "setup_hex": "210a000002000000"
+   },
+   "handler": "0x8007c94",
+   "handler_kind": "hookcont",
+   "route": [
+    "hook:0x8007194"
+   ],
+   "chain_stops": [
+    "call",
+    "ramload"
+   ],
+   "handler_shared_with": [
+    "E_IF0_SET_IDLE",
+    "E_IF1_SET_IDLE"
+   ],
+   "next_entry": "E_IF2_SET_PROTOCOL"
+  },
+  {
+   "id": "E_IF2_SET_PROTOCOL",
+   "class": "input",
+   "census_id": "iface2",
+   "setup": {
+    "bm": 33,
+    "req": 11,
+    "value": 1,
+    "index": 2,
+    "length": 0,
+    "setup_hex": "210b010002000000"
+   },
+   "handler": "0x800718c",
+   "handler_kind": "hook",
+   "route": [],
+   "chain_stops": [
+    "store"
+   ],
+   "note": "same arm as E_IF1_SET_PROTOCOL: shared label, credited by identity only",
+   "handler_shared_with": [
+    "E_IF1_SET_PROTOCOL"
+   ],
+   "next_entry": "X_DEVICE"
+  },
+  {
+   "id": "X_DEVICE",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 128,
+    "req": 6,
+    "value": 256,
+    "index": 0,
+    "length": 18,
+    "setup_hex": "8006000100001200"
+   },
+   "handler": "0x8007688",
+   "handler_kind": "gud",
+   "route": [
+    "hook:0x80071e0",
+    "std:0x8008eae"
+   ],
+   "chain_stops": [
+    "ramload",
+    "call",
+    "store"
+   ],
+   "gud_r1_at_arm": 0,
+   "handler_shared_with": [],
+   "next_entry": "X_CONFIG"
+  },
+  {
+   "id": "X_CONFIG",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 128,
+    "req": 6,
+    "value": 512,
+    "index": 0,
+    "length": 84,
+    "setup_hex": "8006000200005400"
+   },
+   "handler": "0x8007630",
+   "handler_kind": "gud",
+   "route": [
+    "hook:0x80071e0",
+    "std:0x8008eae"
+   ],
+   "chain_stops": [
+    "ramload",
+    "call",
+    "store"
+   ],
+   "gud_r1_at_arm": 0,
+   "handler_shared_with": [],
+   "next_entry": "X_STRING_0"
+  },
+  {
+   "id": "X_STRING_0",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 128,
+    "req": 6,
+    "value": 768,
+    "index": 0,
+    "length": 4,
+    "setup_hex": "8006000300000400"
+   },
+   "handler": "0x800768e",
+   "handler_kind": "gud",
+   "route": [
+    "hook:0x80071e0",
+    "std:0x8008eae"
+   ],
+   "chain_stops": [
+    "ramload",
+    "call",
+    "store"
+   ],
+   "gud_r1_at_arm": 0,
+   "handler_shared_with": [],
+   "next_entry": "X_STRING_1"
+  },
+  {
+   "id": "X_STRING_1",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 128,
+    "req": 6,
+    "value": 769,
+    "index": 1033,
+    "length": 255,
+    "setup_hex": "800601030904ff00"
+   },
+   "handler": "0x8007654",
+   "handler_kind": "gud",
+   "route": [
+    "hook:0x80071e0",
+    "std:0x8008eae"
+   ],
+   "chain_stops": [
+    "ramload",
+    "call",
+    "store"
+   ],
+   "gud_r1_at_arm": 1033,
+   "handler_shared_with": [],
+   "next_entry": "X_STRING_2"
+  },
+  {
+   "id": "X_STRING_2",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 128,
+    "req": 6,
+    "value": 770,
+    "index": 1033,
+    "length": 255,
+    "setup_hex": "800602030904ff00"
+   },
+   "handler": "0x800765a",
+   "handler_kind": "gud",
+   "route": [
+    "hook:0x80071e0",
+    "std:0x8008eae"
+   ],
+   "chain_stops": [
+    "ramload",
+    "call",
+    "store"
+   ],
+   "gud_r1_at_arm": 1033,
+   "handler_shared_with": [],
+   "next_entry": "X_STRING_3"
+  },
+  {
+   "id": "X_STRING_3",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 128,
+    "req": 6,
+    "value": 771,
+    "index": 1033,
+    "length": 255,
+    "setup_hex": "800603030904ff00"
+   },
+   "handler": "0x8007660",
+   "handler_kind": "gud",
+   "route": [
+    "hook:0x80071e0",
+    "std:0x8008eae"
+   ],
+   "chain_stops": [
+    "ramload",
+    "call",
+    "call"
+   ],
+   "gud_r1_at_arm": 1033,
+   "handler_shared_with": [],
+   "next_entry": "X_GET_STATUS_DEV"
+  },
+  {
+   "id": "X_GET_STATUS_DEV",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 128,
+    "req": 0,
+    "value": 0,
+    "index": 0,
+    "length": 2,
+    "setup_hex": "8000000000000200"
+   },
+   "handler": "0x8008e6a",
+   "handler_kind": "std",
+   "route": [
+    "hook:0x80071e0"
+   ],
+   "chain_stops": [
+    "ramload",
+    "store"
+   ],
+   "handler_shared_with": [],
+   "next_entry": "X_GET_STATUS_IF"
+  },
+  {
+   "id": "X_GET_STATUS_IF",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 129,
+    "req": 0,
+    "value": 0,
+    "index": 0,
+    "length": 2,
+    "setup_hex": "8100000000000200"
+   },
+   "handler": "0x8008ee8",
+   "handler_kind": "std",
+   "route": [
+    "hook:0x80071e0"
+   ],
+   "chain_stops": [
+    "ramload",
+    "store"
+   ],
+   "handler_shared_with": [
+    "X_SYNCH_FRAME"
+   ],
+   "next_entry": "X_GET_STATUS_EP_IN"
+  },
+  {
+   "id": "X_GET_STATUS_EP_IN",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 130,
+    "req": 0,
+    "value": 0,
+    "index": 129,
+    "length": 2,
+    "setup_hex": "8200000081000200"
+   },
+   "handler": "0x8008f7c",
+   "handler_kind": "std",
+   "route": [
+    "hook:0x80071e0"
+   ],
+   "chain_stops": [
+    "ramload",
+    "call"
+   ],
+   "handler_shared_with": [],
+   "next_entry": "X_GET_STATUS_EP_OUT"
+  },
+  {
+   "id": "X_GET_STATUS_EP_OUT",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 130,
+    "req": 0,
+    "value": 0,
+    "index": 1,
+    "length": 2,
+    "setup_hex": "8200000001000200"
+   },
+   "handler": "0x8008f92",
+   "handler_kind": "std",
+   "route": [
+    "hook:0x80071e0"
+   ],
+   "chain_stops": [
+    "ramload",
+    "call"
+   ],
+   "handler_shared_with": [],
+   "next_entry": "X_CLEAR_FEATURE_DEV_RW"
+  },
+  {
+   "id": "X_CLEAR_FEATURE_DEV_RW",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 0,
+    "req": 1,
+    "value": 1,
+    "index": 0,
+    "length": 0,
+    "setup_hex": "0001010000000000"
+   },
+   "handler": "0x8008efe",
+   "handler_kind": "std",
+   "route": [
+    "hook:0x80071e0"
+   ],
+   "chain_stops": [
+    "ramload",
+    "store"
+   ],
+   "handler_shared_with": [],
+   "next_entry": "X_SET_FEATURE_DEV_RW"
+  },
+  {
+   "id": "X_SET_FEATURE_DEV_RW",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 0,
+    "req": 3,
+    "value": 1,
+    "index": 0,
+    "length": 0,
+    "setup_hex": "0003010000000000"
+   },
+   "handler": "0x8008e8e",
+   "handler_kind": "std",
+   "route": [
+    "hook:0x80071e0"
+   ],
+   "chain_stops": [
+    "ramload",
+    "store"
+   ],
+   "handler_shared_with": [],
+   "next_entry": "X_CLEAR_FEATURE_EP_IN"
+  },
+  {
+   "id": "X_CLEAR_FEATURE_EP_IN",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 2,
+    "req": 1,
+    "value": 0,
+    "index": 129,
+    "length": 0,
+    "setup_hex": "0201000081000000"
+   },
+   "handler": "0x8008fb2",
+   "handler_kind": "std",
+   "route": [
+    "hook:0x80071e0"
+   ],
+   "chain_stops": [
+    "ramload",
+    "call"
+   ],
+   "handler_shared_with": [],
+   "next_entry": "X_CLEAR_FEATURE_EP_OUT"
+  },
+  {
+   "id": "X_CLEAR_FEATURE_EP_OUT",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 2,
+    "req": 1,
+    "value": 0,
+    "index": 1,
+    "length": 0,
+    "setup_hex": "0201000001000000"
+   },
+   "handler": "0x8008fb8",
+   "handler_kind": "std",
+   "route": [
+    "hook:0x80071e0"
+   ],
+   "chain_stops": [
+    "ramload",
+    "call"
+   ],
+   "handler_shared_with": [],
+   "next_entry": "X_SET_FEATURE_EP_IN"
+  },
+  {
+   "id": "X_SET_FEATURE_EP_IN",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 2,
+    "req": 3,
+    "value": 0,
+    "index": 129,
+    "length": 0,
+    "setup_hex": "0203000081000000"
+   },
+   "handler": "0x8008fd8",
+   "handler_kind": "std",
+   "route": [
+    "hook:0x80071e0"
+   ],
+   "chain_stops": [
+    "ramload",
+    "call"
+   ],
+   "handler_shared_with": [],
+   "next_entry": "X_SET_FEATURE_EP_OUT"
+  },
+  {
+   "id": "X_SET_FEATURE_EP_OUT",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 2,
+    "req": 3,
+    "value": 0,
+    "index": 1,
+    "length": 0,
+    "setup_hex": "0203000001000000"
+   },
+   "handler": "0x8008fde",
+   "handler_kind": "std",
+   "route": [
+    "hook:0x80071e0"
+   ],
+   "chain_stops": [
+    "ramload",
+    "call"
+   ],
+   "handler_shared_with": [],
+   "next_entry": "X_SET_ADDRESS"
+  },
+  {
+   "id": "X_SET_ADDRESS",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 0,
+    "req": 5,
+    "value": 42,
+    "index": 0,
+    "length": 0,
+    "setup_hex": "00052a0000000000"
+   },
+   "handler": "0x8008f12",
+   "handler_kind": "std",
+   "route": [
+    "hook:0x80071e0"
+   ],
+   "chain_stops": [
+    "ramload",
+    "store"
+   ],
+   "handler_shared_with": [],
+   "next_entry": "X_GET_CONFIGURATION"
+  },
+  {
+   "id": "X_GET_CONFIGURATION",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 128,
+    "req": 8,
+    "value": 0,
+    "index": 0,
+    "length": 1,
+    "setup_hex": "8008000000000100"
+   },
+   "handler": "0x8008f1a",
+   "handler_kind": "std",
+   "route": [
+    "hook:0x80071e0"
+   ],
+   "chain_stops": [
+    "ramload",
+    "store"
+   ],
+   "handler_shared_with": [],
+   "next_entry": "X_SET_CONFIGURATION"
+  },
+  {
+   "id": "X_SET_CONFIGURATION",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 0,
+    "req": 9,
+    "value": 1,
+    "index": 0,
+    "length": 0,
+    "setup_hex": "0009010000000000"
+   },
+   "handler": "0x8008f52",
+   "handler_kind": "std",
+   "route": [
+    "hook:0x80071e0"
+   ],
+   "chain_stops": [
+    "ramload",
+    "store"
+   ],
+   "handler_shared_with": [],
+   "next_entry": "X_SYNCH_FRAME"
+  },
+  {
+   "id": "X_SYNCH_FRAME",
+   "class": "extra",
+   "census_id": null,
+   "setup": {
+    "bm": 130,
+    "req": 12,
+    "value": 0,
+    "index": 129,
+    "length": 2,
+    "setup_hex": "820c000081000200"
+   },
+   "handler": "0x8008ee8",
+   "handler_kind": "std",
+   "route": [
+    "hook:0x80071e0"
+   ],
+   "chain_stops": [
+    "ramload",
+    "store"
+   ],
+   "handler_shared_with": [
+    "X_GET_STATUS_IF"
+   ],
+   "next_entry": "E_IF0_GET_DESC_HID"
+  }
+ ],
+ "outputs": {
+  "O_IF0_IN": "emit-only: the boot keyboard INPUT report the device sends on EP 0x81",
+  "O_IF1_IN_ID2": "emit-only: Report ID 2 INPUT (mouse) the device sends on EP 0x82",
+  "O_IF1_IN_ID3": "emit-only: Report ID 3 INPUT (system) the device sends on EP 0x82",
+  "O_IF1_IN_ID4": "emit-only: Report ID 4 INPUT (consumer) the device sends on EP 0x82",
+  "O_IF1_IN_ID6": "emit-only: Report ID 6 INPUT (NKRO) the device sends on EP 0x82",
+  "O_IF2_IN": "emit-only: the console INPUT report the device sends on EP 0x83"
+ },
+ "controls": [
+  {
+   "id": "ctl-desc-type-0x99",
+   "setup": {
+    "bm": 128,
+    "req": 6,
+    "value": 39168,
+    "index": 0,
+    "length": 16,
+    "setup_hex": "8006009900001000"
+   },
+   "static_path": [
+    "hook:0x80071e0",
+    "std:0x8008eae",
+    "gud:0x8007640"
+   ]
+  },
+  {
+   "id": "ctl-string-index-4",
+   "setup": {
+    "bm": 128,
+    "req": 6,
+    "value": 772,
+    "index": 1033,
+    "length": 64,
+    "setup_hex": "8006040309044000"
+   },
+   "static_path": [
+    "hook:0x80071e0",
+    "std:0x8008eae",
+    "gud:0x8007640"
+   ]
+  },
+  {
+   "id": "ctl-hid-class-iface-9",
+   "setup": {
+    "bm": 129,
+    "req": 6,
+    "value": 8448,
+    "index": 9,
+    "length": 9,
+    "setup_hex": "8106002109000900"
+   },
+   "static_path": [
+    "hook:0x80071b6",
+    "gud:0x8007640"
+   ]
+  },
+  {
+   "id": "ctl-report-iface-9",
+   "setup": {
+    "bm": 129,
+    "req": 6,
+    "value": 8704,
+    "index": 9,
+    "length": 64,
+    "setup_hex": "8106002209004000"
+   },
+   "static_path": [
+    "hook:0x80071b6",
+    "gud:0x8007640"
+   ]
+  },
+  {
+   "id": "ctl-get-report-iface-9",
+   "setup": {
+    "bm": 161,
+    "req": 1,
+    "value": 256,
+    "index": 9,
+    "length": 8,
+    "setup_hex": "a101000109000800"
+   },
+   "static_path": [
+    "hook:0x8007a28"
+   ]
+  },
+  {
+   "id": "ctl-get-report-id-9",
+   "setup": {
+    "bm": 161,
+    "req": 1,
+    "value": 265,
+    "index": 0,
+    "length": 8,
+    "setup_hex": "a101090100000800"
+   },
+   "static_path": [
+    "hook:0x8007a28"
+   ]
+  },
+  {
+   "id": "ctl-get-idle-iface-9",
+   "setup": {
+    "bm": 161,
+    "req": 2,
+    "value": 0,
+    "index": 9,
+    "length": 1,
+    "setup_hex": "a102000009000100"
+   },
+   "static_path": [
+    "hook:0x8007c70"
+   ]
+  },
+  {
+   "id": "ctl-set-idle-iface-9",
+   "setup": {
+    "bm": 33,
+    "req": 10,
+    "value": 0,
+    "index": 9,
+    "length": 0,
+    "setup_hex": "210a000009000000"
+   },
+   "static_path": [
+    "hook:0x8007194",
+    "hookcont:0x8007cc0"
+   ]
+  },
+  {
+   "id": "ctl-get-protocol-iface-1",
+   "setup": {
+    "bm": 161,
+    "req": 3,
+    "value": 0,
+    "index": 1,
+    "length": 1,
+    "setup_hex": "a103000001000100"
+   },
+   "static_path": [
+    "hook:0x80071e0",
+    "std:0x8008de2"
+   ]
+  },
+  {
+   "id": "ctl-set-report-iface-2",
+   "setup": {
+    "bm": 33,
+    "req": 9,
+    "value": 512,
+    "index": 2,
+    "length": 1,
+    "setup_hex": "2109000202000100",
+    "out_hex": "02"
+   },
+   "static_path": [
+    "hook:0x80071e0",
+    "std:0x8008de2"
+   ]
+  },
+  {
+   "id": "ctl-set-report-id-5",
+   "setup": {
+    "bm": 33,
+    "req": 9,
+    "value": 517,
+    "index": 1,
+    "length": 2,
+    "setup_hex": "2109050201000200",
+    "out_hex": "0502"
+   },
+   "static_path": [
+    "hook:0x800716c",
+    "cb:0x800727a"
+   ]
+  },
+  {
+   "id": "ctl-vendor-request",
+   "setup": {
+    "bm": 64,
+    "req": 90,
+    "value": 0,
+    "index": 0,
+    "length": 0,
+    "setup_hex": "405a000000000000"
+   },
+   "static_path": [
+    "hook:0x80071e0",
+    "std:0x8008de2"
+   ]
+  },
+  {
+   "id": "ctl-class-req-0x20-iface-0",
+   "setup": {
+    "bm": 33,
+    "req": 32,
+    "value": 0,
+    "index": 0,
+    "length": 7,
+    "setup_hex": "2120000000000700",
+    "out_hex": "00000000000000"
+   },
+   "static_path": [
+    "hook:0x80071e0",
+    "std:0x8008de2"
+   ]
+  },
+  {
+   "id": "ctl-get-interface",
+   "setup": {
+    "bm": 129,
+    "req": 10,
+    "value": 0,
+    "index": 0,
+    "length": 1,
+    "setup_hex": "810a000000000100"
+   },
+   "static_path": [
+    "hook:0x80071e0",
+    "std:0x8008de2"
+   ]
+  },
+  {
+   "id": "ctl-silence",
+   "setup": null
+  },
+  {
+   "id": "mal-device-wlength-0",
+   "malformed": true,
+   "setup": {
+    "bm": 128,
+    "req": 6,
+    "value": 256,
+    "index": 0,
+    "length": 0,
+    "setup_hex": "8006000100000000"
+   },
+   "static_path": [
+    "hook:0x80071e0",
+    "std:0x8008eae",
+    "gud:0x8007688"
+   ],
+   "static_reaches_own": true
+  },
+  {
+   "id": "mal-get-idle-wlength-0",
+   "malformed": true,
+   "setup": {
+    "bm": 161,
+    "req": 2,
+    "value": 0,
+    "index": 0,
+    "length": 0,
+    "setup_hex": "a102000000000000"
+   },
+   "static_path": [
+    "hook:0x8007c44"
+   ],
+   "static_reaches_own": true
+  },
+  {
+   "id": "mal-set-report-if0-wlength-0",
+   "malformed": true,
+   "setup": {
+    "bm": 33,
+    "req": 9,
+    "value": 512,
+    "index": 0,
+    "length": 0,
+    "setup_hex": "2109000200000000"
+   },
+   "static_path": [
+    "hook:0x800716c"
+   ],
+   "static_reaches_own": false
+  }
+ ],
+ "hooks": [
+  {
+   "kind": "entry",
+   "addr": "0x80070f8",
+   "label": "requests_hook_cb"
+  },
+  {
+   "kind": "route",
+   "addr": "0x800761c",
+   "label": "get_usb_descriptor"
+  },
+  {
+   "kind": "own",
+   "addr": "0x800766e",
+   "label": "E_IF0_GET_DESC_HID+E_IF1_GET_DESC_HID+E_IF2_GET_DESC_HID",
+   "akind": "gud"
+  },
+  {
+   "kind": "own",
+   "addr": "0x800767c",
+   "label": "E_IF0_GET_DESC_REPORT+E_IF1_GET_DESC_REPORT+E_IF2_GET_DESC_REPORT",
+   "akind": "gud"
+  },
+  {
+   "kind": "own",
+   "addr": "0x80079f8",
+   "label": "E_IF0_GET_REPORT+E_IF1_GET_REPORT+E_IF2_GET_REPORT",
+   "akind": "hook"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8007c44",
+   "label": "E_IF0_GET_IDLE+E_IF1_GET_IDLE+E_IF2_GET_IDLE",
+   "akind": "hook"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8007c94",
+   "label": "E_IF0_SET_IDLE+E_IF1_SET_IDLE+E_IF2_SET_IDLE",
+   "akind": "hookcont"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8007134",
+   "label": "E_IF0_GET_PROTOCOL",
+   "akind": "hook"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8007184",
+   "label": "E_IF0_SET_PROTOCOL",
+   "akind": "hook"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8007276",
+   "label": "E_IF0_SET_REPORT_OUT",
+   "akind": "cb"
+  },
+  {
+   "kind": "own",
+   "addr": "0x800718c",
+   "label": "E_IF1_SET_PROTOCOL+E_IF2_SET_PROTOCOL",
+   "akind": "hook"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8007270",
+   "label": "E_IF1_SET_REPORT_OUT_ID6",
+   "akind": "cb"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8007688",
+   "label": "X_DEVICE",
+   "akind": "gud"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8007630",
+   "label": "X_CONFIG",
+   "akind": "gud"
+  },
+  {
+   "kind": "own",
+   "addr": "0x800768e",
+   "label": "X_STRING_0",
+   "akind": "gud"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8007654",
+   "label": "X_STRING_1",
+   "akind": "gud"
+  },
+  {
+   "kind": "own",
+   "addr": "0x800765a",
+   "label": "X_STRING_2",
+   "akind": "gud"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8007660",
+   "label": "X_STRING_3",
+   "akind": "gud"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8008e6a",
+   "label": "X_GET_STATUS_DEV",
+   "akind": "std"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8008ee8",
+   "label": "X_GET_STATUS_IF+X_SYNCH_FRAME",
+   "akind": "std"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8008f7c",
+   "label": "X_GET_STATUS_EP_IN",
+   "akind": "std"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8008f92",
+   "label": "X_GET_STATUS_EP_OUT",
+   "akind": "std"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8008efe",
+   "label": "X_CLEAR_FEATURE_DEV_RW",
+   "akind": "std"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8008e8e",
+   "label": "X_SET_FEATURE_DEV_RW",
+   "akind": "std"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8008fb2",
+   "label": "X_CLEAR_FEATURE_EP_IN",
+   "akind": "std"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8008fb8",
+   "label": "X_CLEAR_FEATURE_EP_OUT",
+   "akind": "std"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8008fd8",
+   "label": "X_SET_FEATURE_EP_IN",
+   "akind": "std"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8008fde",
+   "label": "X_SET_FEATURE_EP_OUT",
+   "akind": "std"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8008f12",
+   "label": "X_SET_ADDRESS",
+   "akind": "std"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8008f1a",
+   "label": "X_GET_CONFIGURATION",
+   "akind": "std"
+  },
+  {
+   "kind": "own",
+   "addr": "0x8008f52",
+   "label": "X_SET_CONFIGURATION",
+   "akind": "std"
+  },
+  {
+   "kind": "route",
+   "addr": "0x80071b6",
+   "label": "route-hook-0x80071b6"
+  },
+  {
+   "kind": "route",
+   "addr": "0x8007194",
+   "label": "route-hook-0x8007194"
+  },
+  {
+   "kind": "route",
+   "addr": "0x800716c",
+   "label": "route-hook-0x800716c"
+  },
+  {
+   "kind": "route",
+   "addr": "0x80071e0",
+   "label": "route-hook-0x80071e0"
+  },
+  {
+   "kind": "route",
+   "addr": "0x8008eae",
+   "label": "route-std-0x8008eae"
+  },
+  {
+   "kind": "shared",
+   "addr": "0x8008de2",
+   "label": "std-stall"
+  },
+  {
+   "kind": "shared",
+   "addr": "0x8007640",
+   "label": "gud-not-found"
+  },
+  {
+   "kind": "shared",
+   "addr": "0x8007a28",
+   "label": "arm-of-ctl-get-report-iface-9"
+  },
+  {
+   "kind": "shared",
+   "addr": "0x8007c70",
+   "label": "arm-of-ctl-get-idle-iface-9"
+  },
+  {
+   "kind": "shared",
+   "addr": "0x8007cc0",
+   "label": "arm-of-ctl-set-idle-iface-9"
+  },
+  {
+   "kind": "shared",
+   "addr": "0x800727a",
+   "label": "arm-of-ctl-set-report-id-5"
+  },
+  {
+   "kind": "isr",
+   "addr": "0x800a192",
+   "label": "TIM3_IRQHandler+2(exc45)"
+  }
+ ]
+}
